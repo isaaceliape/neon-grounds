@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Territory</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div id="hud" hidden>
+    <ol id="board"></ol>
+    <div id="clock"></div>
+    <div id="go" hidden>GO!</div>
+    <canvas id="mini" width="168" height="126"></canvas>
+    <ol id="feed"></ol>
+    <p id="status"></p>
+    <button type="button" id="restart" hidden>Restart</button>
+    <div id="touch" hidden>
+      <button type="button" id="touch-left" aria-label="Turn left">&#9664;</button>
+      <button type="button" id="touch-right" aria-label="Turn right">&#9654;</button>
+    </div>
+  </div>
+  <div id="overlay">
+    <form id="card">
+      <h1>Territory</h1>
+      <p id="blurb">Close a loop to take the ground inside it. Cross a line and that player is out. Most ground when the clock stops wins.</p>
+      <ol id="howto" aria-label="How to play">
+        <li>
+          <svg viewBox="0 0 64 44" aria-hidden="true">
+            <rect class="hw-home" x="4" y="13" width="18" height="18" rx="3"/>
+            <path class="hw-line draw" d="M22 22 H54" pathLength="40"/>
+            <circle class="hw-head slide" cx="22" cy="22" r="3.2"/>
+          </svg>
+          <span>Leave your land</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 64 44" aria-hidden="true">
+            <path class="hw-fill fill" d="M22 22 H50 V38 H13 V31 H22 Z"/>
+            <rect class="hw-home" x="4" y="13" width="18" height="18" rx="3"/>
+            <path class="hw-line draw-loop" d="M22 22 H50 V38 H13 V31" pathLength="80"/>
+          </svg>
+          <span>Loop back to claim</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 64 44" aria-hidden="true">
+            <path class="hw-foe cut" d="M8 30 H56" pathLength="48"/>
+            <path class="hw-line draw-down" d="M32 4 V40" pathLength="36"/>
+            <circle class="hw-spark pop" cx="32" cy="30" r="5"/>
+          </svg>
+          <span>Cross a line to cut</span>
+        </li>
+      </ol>
+      <div id="join-row">
+        <label for="name">Name</label>
+        <input id="name" maxlength="16" autocomplete="off" required>
+        <button type="submit" id="join">Join</button>
+      </div>
+      <div id="room" hidden>
+        <label id="nick-label" for="nick">Your name</label>
+        <input id="nick" maxlength="16" autocomplete="off">
+        <label class="toggle" for="steer">
+          <input id="steer" type="checkbox">
+          Steer with the cursor
+        </label>
+        <ol id="roster"></ol>
+        <div id="share"></div>
+        <label id="length-label" for="minutes">Round length</label>
+        <select id="minutes">
+          <option value="1">1 minute</option>
+          <option value="2">2 minutes</option>
+          <option value="3" selected>3 minutes</option>
+          <option value="5">5 minutes</option>
+        </select>
+        <div id="bot-row">
+          <select id="bot-level" aria-label="Bot level">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+          <button type="button" id="add-bot">Add bot</button>
+        </div>
+        <button type="button" id="start">Start</button>
+        <p id="waiting"></p>
+      </div>
+      <ol id="results" hidden></ol>
+      <p id="error"></p>
+      <p id="link-note"></p>
+    </form>
+  </div>
+  <canvas id="fx"></canvas>
+  <button type="button" id="mute">Sound on</button>
+  <script src="view-helpers.js"></script>
+  <script src="sfx.js"></script>
+  <script src="fx.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
