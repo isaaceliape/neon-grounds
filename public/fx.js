@@ -2,7 +2,7 @@
 // World positions are in map cells, screen positions are in CSS pixels.
 const fx = (() => {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const MAX_PARTICLES = 1800
+  const MAX_PARTICLES = 900
   const screen = document.querySelector('#fx')
   const screenCtx = screen.getContext('2d')
 
@@ -111,6 +111,9 @@ const fx = (() => {
   // Glow sparks left behind a moving head.
   function trailSparks(x, y, heading, color, dt) {
     if (reduced) return
+    // Shed load when a burst just filled the pool: trail sparks are the
+    // first thing to drop, so captures/deaths never hitch.
+    if (particles.length > 650) return
     const count = Math.floor(dt * 70 + Math.random())
     for (let i = 0; i < count; i += 1) {
       const back = heading + Math.PI + rand(-0.55, 0.55)
@@ -170,8 +173,23 @@ const fx = (() => {
     }
   }
 
+  // In-place compaction: update() runs every frame, and Array.filter would
+  // allocate a fresh array (plus iterator garbage) right in the middle of
+  // the effects that need the budget most.
+  function compactAlive(list, alive) {
+    let kept = 0
+    for (let i = 0; i < list.length; i += 1) {
+      const item = list[i]
+      if (!alive(item)) continue
+      list[kept] = item
+      kept += 1
+    }
+    list.length = kept
+  }
+
   function update(dt) {
-    for (const p of particles) {
+    for (let i = 0; i < particles.length; i += 1) {
+      const p = particles[i]
       p.age += dt
       p.x += p.vx * dt
       p.y += p.vy * dt
@@ -179,13 +197,13 @@ const fx = (() => {
       p.vx *= damp
       p.vy *= damp
     }
-    particles = particles.filter((p) => p.age < p.life)
-    for (const r of rings) r.age += dt
-    rings = rings.filter((r) => r.age < r.life + r.delay)
-    for (const f of flashes) f.age += dt
-    flashes = flashes.filter((f) => f.age < f.life)
-    for (const f of floaters) f.age += dt
-    floaters = floaters.filter((f) => f.age < f.life)
+    compactAlive(particles, (p) => p.age < p.life)
+    for (let i = 0; i < rings.length; i += 1) rings[i].age += dt
+    compactAlive(rings, (r) => r.age < r.life + r.delay)
+    for (let i = 0; i < flashes.length; i += 1) flashes[i].age += dt
+    compactAlive(flashes, (f) => f.age < f.life)
+    for (let i = 0; i < floaters.length; i += 1) floaters[i].age += dt
+    compactAlive(floaters, (f) => f.age < f.life)
     for (const c of confetti) {
       c.age = (c.age || 0) + dt
       c.vy += c.gravity * dt
@@ -197,7 +215,7 @@ const fx = (() => {
       c.rot += c.spin * dt
     }
     const vh = window.innerHeight
-    confetti = confetti.filter((c) => c.y < vh + 40)
+    compactAlive(confetti, (c) => c.y < vh + 40)
   }
 
   // [x, y] pixel offset for this frame. Fades out on its own.
@@ -244,13 +262,29 @@ const fx = (() => {
     ctx.save()
     ctx.globalCompositeOperation = 'lighter'
 
-    const hotCells = []
+    const hasDanger = Boolean(danger)
+    const dangerTrail = hasDanger ? danger.trail : null
+    const dangerId = hasDanger ? danger.myId : 0
+    const dangerX = hasDanger ? danger.x : 0
+    const dangerY = hasDanger ? danger.y : 0
+    const dangerRange2 = 10 * 10
+    let hotCells = null
     if (trailCells.size) {
       ctx.fillStyle = '#ffffff'
       for (const index of trailCells) {
-        if (danger && viewHelpers.isDangerCell(index, w, danger.trail[index], danger.myId, danger.x, danger.y)) {
-          hotCells.push(index)
-          continue
+        if (hasDanger) {
+          const owner = dangerTrail[index]
+          if (owner && owner !== dangerId) {
+            const x = index % w
+            const y = (index - x) / w
+            const dx = x + 0.5 - dangerX
+            const dy = y + 0.5 - dangerY
+            if (dx * dx + dy * dy < dangerRange2) {
+              if (!hotCells) hotCells = []
+              hotCells.push(index)
+              continue
+            }
+          }
         }
         if (reduced) continue
         const x = index % w
@@ -277,20 +311,28 @@ const fx = (() => {
       ctx.stroke()
     }
 
-    for (const p of particles) {
+    // Rects, not arcs: one fillRect per spark is ~3x cheaper than an arc
+    // path and looks identical at these sizes. fillStyle strings are cached
+    // so a burst of one color does a single string alloc per frame.
+    let lastParticleStyle = null
+    for (let i = 0; i < particles.length; i += 1) {
+      const p = particles[i]
       const progress = p.age / p.life
       const px = ox + p.x * cell
       const py = oy + p.y * cell
       if (px < -20 || py < -20 || px > vw + 20 || py > vh + 20) continue
       ctx.globalAlpha = (1 - progress) ** 1.3
-      ctx.fillStyle = rgba(p.color, 1)
-      ctx.beginPath()
-      ctx.arc(px, py, Math.max(0.8, p.size * cell * (1 - progress * 0.5)), 0, Math.PI * 2)
-      ctx.fill()
+      const key = p.color[0] * 65536 + p.color[1] * 256 + p.color[2]
+      if (key !== lastParticleStyle) {
+        lastParticleStyle = key
+        ctx.fillStyle = rgba(p.color, 1)
+      }
+      const s = Math.max(1, p.size * cell * (1 - progress * 0.5))
+      ctx.fillRect(px - s / 2, py - s / 2, s, s)
     }
     ctx.restore()
 
-    if (hotCells.length) {
+    if (hotCells && hotCells.length) {
       // Normal blending so the cells read as red whatever color the line is.
       ctx.save()
       ctx.fillStyle = '#ff2d55'
@@ -310,6 +352,8 @@ const fx = (() => {
     ctx.save()
     ctx.textAlign = 'center'
     ctx.lineJoin = 'round'
+    // No shadowBlur here: the dark outline already gives contrast, and a
+    // blur per floater per frame is one of the most expensive canvas ops.
     for (const f of floaters) {
       const progress = f.age / f.life
       const pop = progress < 0.12 ? 0.6 + (progress / 0.12) * 0.55 : 1.15 - Math.min(0.15, (progress - 0.12) * 0.4)
@@ -320,8 +364,6 @@ const fx = (() => {
       ctx.lineWidth = 5
       ctx.strokeStyle = 'rgba(7, 9, 16, 0.85)'
       ctx.strokeText(f.text, px, py)
-      ctx.shadowColor = rgba(f.color, 1)
-      ctx.shadowBlur = 14
       ctx.fillStyle = '#ffffff'
       ctx.fillText(f.text, px, py)
     }

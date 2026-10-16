@@ -159,7 +159,19 @@ h1 {
 #error { color: #ff4d6d; text-shadow: 0 0 8px rgba(255, 77, 109, 0.7); min-height: 0; }
 #error:empty, #waiting:empty, #link-note:empty { display: none; }
 
-#join-row, #room { display: grid; gap: 8px; }
+#join-row, #room, #online-row { display: grid; gap: 8px; }
+
+#online-note { margin: 6px 0 0; }
+
+#join-room-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+
+#code { text-transform: uppercase; letter-spacing: 0.2em; }
+
+#room-code { margin: 0; }
+
+#room-code strong { font-size: 28px; letter-spacing: 0.3em; color: var(--glow); text-shadow: 0 0 12px rgba(57, 255, 210, 0.7); }
+
+#room-code:empty, #online-note:empty { display: none; }
 
 label { font-size: 14px; color: var(--muted); }
 

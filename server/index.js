@@ -8,6 +8,8 @@ import { WebSocketServer } from 'ws'
 import { createGame } from './game.js'
 
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public')
+const serverDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)))
+const gameFile = path.resolve(serverDir, 'game.js')
 const defaultResultsLog = path.resolve(publicDir, '../logs/results.log')
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -75,8 +77,10 @@ export function startServer({ port = 0, log = false, gameOptions = {}, resultsLo
     try {
       const url = new URL(req.url ?? '/', 'http://localhost')
       const requested = decodeURIComponent(url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\/+/, ''))
-      const file = path.resolve(publicDir, requested)
-      if (file !== publicDir && !file.startsWith(`${publicDir}${path.sep}`)) {
+      // host-session.js (ES module, runs the sim in the host's browser)
+      // imports ./game.js, so serve the single server-side copy at /game.js.
+      const file = requested === 'game.js' ? gameFile : path.resolve(publicDir, requested)
+      if (file !== publicDir && file !== gameFile && !file.startsWith(`${publicDir}${path.sep}`)) {
         res.writeHead(403).end()
         return
       }

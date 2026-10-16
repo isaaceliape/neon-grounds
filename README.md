@@ -17,6 +17,16 @@ If the Mac asks whether Node may accept incoming connections, allow it. Set `POR
 
 Stop the server with Ctrl+C in that terminal. Closing a browser does not stop the server.
 
+## Online rooms (no VPN)
+
+The page can also host a room with no server at all. One player clicks **Host online room** and shares the 5-letter room code. Everyone else opens the same page anywhere on the internet, types their name and the code, and clicks **Join room**. The same 12 seats and 3 bots apply.
+
+The host's browser runs the round, peer to peer over WebRTC. The host must keep the page open: if the host's tab closes, the room ends for everyone. Losing the connection briefly is fine; guests rejoin automatically for about 10 seconds, same as a dropped tab on the local server.
+
+Online rooms need internet access to reach the free PeerJS signaling server that introduces the players. After that introduction, game traffic flows directly between browsers. Win counts last for the tab session, and rounds are not written to `logs/results.log` (there is no server to write it).
+
+The static files in `public/` plus a copy of `server/game.js` as `game.js` are all a host needs. Pushing to `main` deploys them to GitHub Pages automatically (see `.github/workflows/pages.yml`); enable Pages in the repo settings with the workflow source and share that URL instead of a VPN address.
+
 ## Joining
 
 Type a name and click Join. Names are up to 16 characters. If someone already has that name, the next person becomes "Name 2".

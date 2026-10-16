@@ -17,6 +17,11 @@ const roster = document.querySelector('#roster')
 const share = document.querySelector('#share')
 const lengthLabel = document.querySelector('#length-label')
 const minutes = document.querySelector('#minutes')
+const onlineRow = document.querySelector('#online-row')
+const hostRoomBtn = document.querySelector('#host-room')
+const codeInput = document.querySelector('#code')
+const joinRoomBtn = document.querySelector('#join-room')
+const roomCodeEl = document.querySelector('#room-code')
 const startBtn = document.querySelector('#start')
 const addBotBtn = document.querySelector('#add-bot')
 const botRow = document.querySelector('#bot-row')
@@ -47,7 +52,18 @@ const KEYS = {
 const ctx = view.getContext('2d')
 const sheet = document.createElement('canvas')
 const sheetCtx = sheet.getContext('2d')
+// Pre-blurred copy of the map used for the neon glow. Rebuilt only when the
+// map changes, so the hot frame loop never pays for a full-screen blur.
+const glow = document.createElement('canvas')
+const glowCtx = glow.getContext('2d')
 const miniCtx = mini.getContext('2d')
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+// Set whenever land/trail change; drawRoundedMap clears it after rebuilding
+// the cached sheet + glow canvases.
+let mapDirty = true
+let mapVersion = 0
+let miniVersion = -1
+let lastSheetCell = 0
 
 let joined = false
 let socket = null
@@ -88,11 +104,34 @@ const touchRight = document.querySelector('#touch-right')
 let lastFrameAt = performance.now()
 let sessionWins = {}
 let resultsKey = ''
+// Connection mode: 'local' (Node server over WebSocket, same origin),
+// 'host' (this browser runs the room, guests join over WebRTC), or
+// 'guest' (playing in someone else's room over WebRTC).
+let netMode = 'local'
+let hostSession = null
+let hostNet = null
+let hostLocalKey = null
+let hostedCode = ''
+let guestConn = null
+let guestQueue = []
+let guestRoom = null // { code, name, token, redials }
 const trailColors = new Map()
 
 nameInput.value = localStorage.getItem('territory-name') || ''
 
 function send(obj) {
+  if (netMode === 'host') {
+    if (hostSession) hostSession.guestMessage(hostLocalKey, obj)
+    return
+  }
+  if (netMode === 'guest') {
+    if (guestConn) {
+      if (!guestConn.send(obj)) guestQueue.push(obj)
+    } else {
+      guestQueue.push(obj)
+    }
+    return
+  }
   const data = JSON.stringify(obj)
   if (socket && socket.readyState === 1) socket.send(data)
   else sendQueue.push(data)
@@ -118,18 +157,189 @@ function connect() {
     onMessage(msg)
   })
   socket.addEventListener('close', () => {
+    if (netMode !== 'local') return
     if (phase === 'lobby') error.textContent = 'Reconnecting...'
     setTimeout(connect, 1000)
   })
 }
 
+function stopLocalSocket() {
+  if (socket) {
+    const pending = socket
+    socket = null
+    try {
+      pending.close()
+    } catch {
+      // ignore
+    }
+  }
+  sendQueue = []
+}
+
+function onlineReady() {
+  if (!window.P2P) return 'Online play did not load. Reload and try again.'
+  return window.P2P.peerError()
+}
+
+function lockOnlineButtons(locked) {
+  hostRoomBtn.disabled = locked
+  joinRoomBtn.disabled = locked
+}
+
+// Host an online room: this browser runs the sim (host-session.js) and
+// guests connect over WebRTC. The host also plays, via a local loopback.
+async function hostOnlineRoom() {
+  const name = nameInput.value.trim()
+  if (!name) {
+    error.textContent = 'Type a name first.'
+    nameInput.focus()
+    return
+  }
+  if (netMode !== 'local') return
+  const missing = onlineReady()
+  if (missing) {
+    error.textContent = missing
+    return
+  }
+  error.textContent = ''
+  lockOnlineButtons(true)
+  try {
+    const mod = await import('./host-session.js')
+    const code = window.P2P.makeCode()
+    const deliver = (key, obj) => {
+      if (key === mod.LOCAL_KEY) onMessage(obj)
+      else if (hostNet) hostNet.sendTo(key, obj)
+    }
+    const broadcastAll = (obj) => {
+      onMessage(obj)
+      if (hostNet) hostNet.broadcast(obj)
+    }
+    hostSession = mod.createHostSession({ roomCode: code, onDeliver: deliver, onBroadcast: broadcastAll })
+    hostLocalKey = mod.LOCAL_KEY
+    hostNet = window.P2P.hostRoom({
+      code,
+      onMessage: (key, msg) => {
+        if (hostSession) hostSession.guestMessage(key, msg)
+      },
+      onLeave: (key) => {
+        if (hostSession) hostSession.guestLeft(key)
+      },
+    })
+    hostedCode = await hostNet.ready
+    netMode = 'host'
+    stopLocalSocket()
+    localStorage.setItem('territory-name', name)
+    sfx.startMusic()
+    send({ type: 'join', name, token: '' })
+  } catch (err) {
+    error.textContent = err?.message || 'Could not host a room.'
+    if (hostNet) {
+      try {
+        hostNet.close()
+      } catch {
+        // ignore
+      }
+      hostNet = null
+    }
+    if (hostSession) {
+      try {
+        hostSession.close()
+      } catch {
+        // ignore
+      }
+      hostSession = null
+    }
+    hostedCode = ''
+    lockOnlineButtons(false)
+  }
+}
+
+// Join someone's room with their code. Redials for ~12s if the connection
+// drops, so the host's 10s seat freeze covers a blip or tab reload.
+function joinOnlineRoom() {
+  const name = nameInput.value.trim()
+  if (!name) {
+    error.textContent = 'Type a name first.'
+    nameInput.focus()
+    return
+  }
+  const code = window.P2P ? window.P2P.normalizeCode(codeInput.value) : ''
+  if (!code) {
+    error.textContent = 'Type the room code the host gave you.'
+    codeInput.focus()
+    return
+  }
+  if (netMode !== 'local') return
+  const missing = onlineReady()
+  if (missing) {
+    error.textContent = missing
+    return
+  }
+  error.textContent = ''
+  lockOnlineButtons(true)
+  netMode = 'guest'
+  stopLocalSocket()
+  guestRoom = { code, name, token: sessionStorage.getItem(`territory-token-${code}`) || '', redials: 0 }
+  localStorage.setItem('territory-name', name)
+  sfx.startMusic()
+  dialGuest()
+}
+
+function dialGuest() {
+  const room = guestRoom
+  if (!room || netMode !== 'guest') return
+  guestConn = window.P2P.joinRoom(room.code, {
+    onMessage,
+    onClose: () => {
+      guestConn = null
+      if (netMode !== 'guest' || guestRoom !== room) return
+      room.redials += 1
+      if (room.redials > 8) {
+        error.textContent = 'Lost the room. Check the code and join again.'
+        guestRoom = null
+        netMode = 'local'
+        lockOnlineButtons(false)
+        connect()
+        return
+      }
+      error.textContent = 'Connection lost. Rejoining...'
+      setTimeout(dialGuest, 1500)
+    },
+  })
+  guestConn.ready.then(() => {
+    if (netMode !== 'guest' || guestRoom !== room) return
+    room.redials = 0
+    error.textContent = ''
+    for (const obj of guestQueue) guestConn.send(obj)
+    guestQueue = []
+    lockOnlineButtons(false)
+    send({ type: 'join', name: room.name, token: room.token })
+  }).catch((err) => {
+    if (netMode !== 'guest' || guestRoom !== room) return
+    error.textContent = err?.message || 'Could not join the room.'
+    guestConn = null
+    guestRoom = null
+    netMode = 'local'
+    lockOnlineButtons(false)
+    connect()
+  })
+}
+
 function onMessage(msg) {
+  if (!msg || typeof msg !== 'object') return
   if (msg.type === 'hello') {
     myId = msg.playerId
     hostId = msg.hostId
     urls = msg.urls || urls
     if (msg.tickMs) tickMs = msg.tickMs
-    if (msg.token) sessionStorage.setItem('territory-token', msg.token)
+    if (msg.token) {
+      if (netMode === 'guest' && guestRoom) {
+        guestRoom.token = msg.token
+        sessionStorage.setItem(`territory-token-${guestRoom.code}`, msg.token)
+      } else {
+        sessionStorage.setItem('territory-token', msg.token)
+      }
+    }
     joined = true
     return
   }
@@ -149,6 +359,8 @@ function onMessage(msg) {
       land = null
       trail = null
       trailCells.clear()
+      mapDirty = true
+      mapVersion += 1
     }
     urls = msg.urls || urls
     showCard(msg)
@@ -161,6 +373,8 @@ function onMessage(msg) {
     land = decode(msg.land)
     trail = decode(msg.trail)
     rebuildTrailSet()
+    mapDirty = true
+    mapVersion += 1
     notePhase(msg.phase, msg)
     phase = msg.phase
     if (msg.phase === 'countdown') camReady = false
@@ -226,6 +440,7 @@ function decode(value) {
 }
 
 function applyRuns(runs) {
+  if (!runs.length) return
   const taken = new Map()
   for (const [start, len, value] of runs) {
     if (value) {
@@ -238,6 +453,8 @@ function applyRuns(runs) {
     }
     land.fill(value, start, start + len)
   }
+  mapDirty = true
+  mapVersion += 1
   for (const [owner, cells] of taken) celebrateCapture(owner, cells)
 }
 
@@ -285,11 +502,14 @@ function celebrateDeath(player) {
 }
 
 function applyTrail(pairs) {
+  if (!pairs.length) return
   for (const [index, id] of pairs) {
     trail[index] = id
     if (id) trailCells.add(index)
     else trailCells.delete(index)
   }
+  mapDirty = true
+  mapVersion += 1
 }
 
 function syncPlayers(list) {
@@ -340,6 +560,7 @@ function showJoin() {
   overlay.hidden = false
   hud.hidden = true
   joinRow.hidden = false
+  onlineRow.hidden = false
   room.hidden = true
   blurb.textContent = RULES
 }
@@ -360,6 +581,7 @@ function showCard(msg) {
   if (champion) blurb.style.setProperty('--win', champion.color)
   const host = myId != null && myId === hostId
   joinRow.hidden = joined
+  onlineRow.hidden = joined
   room.hidden = !joined
   results.hidden = !ended
   lengthLabel.hidden = !host || ended
@@ -481,7 +703,20 @@ function playerRow(player, scored) {
 
 function renderShare(show) {
   share.replaceChildren()
+  roomCodeEl.replaceChildren()
+  roomCodeEl.hidden = true
   if (!show) return
+  if (hostedCode) {
+    const label = document.createElement('span')
+    label.textContent = 'Room code: '
+    const code = document.createElement('strong')
+    code.textContent = hostedCode
+    const hint = document.createElement('span')
+    hint.textContent = ' — friends open this page anywhere, type the code, and join.'
+    roomCodeEl.append(label, code, hint)
+    roomCodeEl.hidden = false
+    return
+  }
   const title = document.createElement('p')
   title.textContent = urls.shared?.length ? 'Others on the VPN open:' : 'No other network address found. Check that the VPN is connected.'
   share.append(title)
@@ -527,10 +762,15 @@ function paintHud(msg) {
 }
 
 // Rows are kept between ticks so they can slide when the ranking changes
-// and flash when a player gains ground.
+// and flash when a player gains ground. Both animations are skipped under
+// prefers-reduced-motion, and layout reads are skipped unless the order may
+// have changed, so steady-state ticks do no forced layout.
 function paintBoard(rows) {
-  const before = new Map()
-  for (const [id, row] of boardRows) before.set(id, row.el.getBoundingClientRect().top)
+  const animate = !REDUCED_MOTION
+  const before = animate ? new Map() : null
+  if (animate) {
+    for (const [id, row] of boardRows) before.set(id, row.el.getBoundingClientRect().top)
+  }
   const seen = new Set()
   for (const player of rows) {
     seen.add(player.id)
@@ -542,7 +782,7 @@ function paintBoard(rows) {
       const name = document.createElement('span')
       const stat = document.createElement('span')
       el.append(swatch, name, stat)
-      row = { el, swatch, name, stat, pct: null }
+      row = { el, swatch, name, stat, pct: null, landRaw: 0 }
       boardRows.set(player.id, row)
       el.classList.add('enter')
     }
@@ -551,8 +791,11 @@ function paintBoard(rows) {
     row.swatch.style.color = player.color
     row.name.textContent = player.id === myId ? `${player.name} (you)` : player.name
     const pct = land ? (player.land / (w * h)) * 100 : null
-    row.stat.textContent = pct == null ? '' : `${pct.toFixed(1)}%`
-    if (pct != null && row.pct != null && player.land > row.landRaw) {
+    const label = pct == null ? '' : `${pct.toFixed(1)}%`
+    if (row.stat.textContent !== label) row.stat.textContent = label
+    // Only flash meaningful gains: a +1 cell trickle every tick would keep
+    // a WAAPI animation alive forever.
+    if (animate && pct != null && row.pct != null && player.land - row.landRaw >= 5) {
       row.stat.animate(
         [
           { transform: 'scale(1.5)', color: '#ffffff', textShadow: `0 0 12px ${player.color}` },
@@ -571,9 +814,11 @@ function paintBoard(rows) {
   }
   const order = rows.map((player) => boardRows.get(player.id).el)
   const current = [...board.children]
-  if (order.length !== current.length || order.some((el, i) => el !== current[i])) {
+  const orderChanged = order.length !== current.length || order.some((el, i) => el !== current[i])
+  if (orderChanged) {
     for (const el of order) board.append(el)
   }
+  if (!animate || !orderChanged) return
   for (const [id, row] of boardRows) {
     const was = before.get(id)
     if (was == null) continue
@@ -658,10 +903,11 @@ function frame() {
     ctx.save()
     ctx.translate(shakeX, shakeY)
     drawRoundedMap(cell)
+    // The glow is pre-rendered into `glow` (only rebuilt when the map
+    // changes), so this is a plain image blit with no per-frame blur filter.
     ctx.save()
-    ctx.filter = 'blur(12px)'
     ctx.globalCompositeOperation = 'lighter'
-    ctx.drawImage(sheet, originX, originY)
+    ctx.drawImage(glow, 0, 0, glow.width || 1, glow.height || 1, originX, originY, w * cell, h * cell)
     ctx.restore()
     viewOriginX = originX
     viewOriginY = originY
@@ -669,15 +915,19 @@ function frame() {
     steerTowardCursor(me)
     ctx.drawImage(sheet, originX, originY)
     ctx.strokeStyle = 'rgba(57, 255, 210, 0.45)'
-    ctx.shadowColor = '#39ffd2'
-    ctx.shadowBlur = 12
+    ctx.lineWidth = 1
     ctx.strokeRect(originX - 0.5, originY - 0.5, w * cell + 1, h * cell + 1)
-    ctx.shadowBlur = 0
+    // Batch the name labels: one font/textAlign setup for all heads.
+    const showNames = cell >= 8
+    if (showNames) {
+      ctx.font = '12px ui-sans-serif, system-ui, sans-serif'
+      ctx.textAlign = 'center'
+    }
     for (const body of bodies.values()) {
       if (!body.alive) continue
       const point = pose(body)
       if (phase === 'play') fx.trailSparks(point.x, point.y, body.heading || 0, hex(body.color), dt)
-      drawHead(originX + point.x * cell, originY + point.y * cell, cell, body)
+      drawHead(originX + point.x * cell, originY + point.y * cell, cell, body, showNames)
     }
     const myPoint = me && me.alive && phase === 'play' ? pose(me) : null
     fx.drawWorld(ctx, {
@@ -695,14 +945,18 @@ function frame() {
       fx.edgeWarning(ctx, { ox: originX, oy: originY, cell, w, h, x: myPoint.x, y: myPoint.y, heading: me.heading || 0, t: frameAt / 1000 })
     }
     ctx.restore()
-    if (mini.width !== w) mini.width = w
-    if (mini.height !== h) mini.height = h
-    miniCtx.setTransform(1, 0, 0, 1, 0, 0)
-    miniCtx.clearRect(0, 0, mini.width, mini.height)
-    miniCtx.fillStyle = '#070910'
-    miniCtx.fillRect(0, 0, mini.width, mini.height)
-    miniCtx.imageSmoothingEnabled = true
-    miniCtx.drawImage(sheet, 0, 0, mini.width, mini.height)
+    // Mini-map only changes when the board does (ticks), not every frame.
+    if (mapVersion !== miniVersion) {
+      miniVersion = mapVersion
+      if (mini.width !== w) mini.width = w
+      if (mini.height !== h) mini.height = h
+      miniCtx.setTransform(1, 0, 0, 1, 0, 0)
+      miniCtx.clearRect(0, 0, mini.width, mini.height)
+      miniCtx.fillStyle = '#070910'
+      miniCtx.fillRect(0, 0, mini.width, mini.height)
+      miniCtx.imageSmoothingEnabled = true
+      miniCtx.drawImage(sheet, 0, 0, mini.width, mini.height)
+    }
   }
   if (phase === 'play' || phase === 'countdown') status.textContent = statusText()
   fx.drawScreen(dt, cssW, cssH, dpr)
@@ -722,6 +976,10 @@ function steerTowardCursor(me) {
   send({ type: 'aim', angle })
 }
 
+// The board only changes on server ticks (~9Hz), so the sheet is cached and
+// rebuilt only when land/trail are dirty or the cell size changes. Interior
+// cells (same owner on all 4 sides) take a plain fillRect fast path; only
+// edge cells pay for roundRect.
 function ownerAt(x, y) {
   if (x < 0 || y < 0 || x >= w || y >= h) return 0
   const index = y * w + x
@@ -737,6 +995,9 @@ function fillStyleFor(id, isTrail) {
 function drawRoundedMap(cellSize) {
   const width = Math.ceil(w * cellSize)
   const height = Math.ceil(h * cellSize)
+  if (!mapDirty && sheet.width === width && sheet.height === height && cellSize === lastSheetCell) return
+  lastSheetCell = cellSize
+  mapDirty = false
   if (sheet.width !== width || sheet.height !== height) {
     sheet.width = width
     sheet.height = height
@@ -745,67 +1006,125 @@ function drawRoundedMap(cellSize) {
   sheetCtx.fillStyle = '#070910'
   sheetCtx.fillRect(0, 0, width, height)
   const radius = cellSize * 0.36
+  const overlap = Math.max(1.25, cellSize * 0.14)
+  const size = cellSize + overlap
+  // Group consecutive cells of the same color into one fillStyle change.
+  let lastStyle = null
   for (let y = 0; y < h; y += 1) {
+    const rowOff = y * w
     for (let x = 0; x < w; x += 1) {
-      const index = y * w + x
+      const index = rowOff + x
       const trailId = trail[index]
       const id = trailId || land[index]
       if (!id) continue
-      const same = (nx, ny) => ownerAt(nx, ny) === id
-      const tl = !same(x, y - 1) && !same(x - 1, y)
-      const tr = !same(x, y - 1) && !same(x + 1, y)
-      const br = !same(x, y + 1) && !same(x + 1, y)
-      const bl = !same(x, y + 1) && !same(x - 1, y)
+      const up = y > 0 ? (trail[index - w] || land[index - w] || 0) : 0
+      const down = y + 1 < h ? (trail[index + w] || land[index + w] || 0) : 0
+      const left = x > 0 ? (trail[index - 1] || land[index - 1] || 0) : 0
+      const right = x + 1 < w ? (trail[index + 1] || land[index + 1] || 0) : 0
       const style = fillStyleFor(id, Boolean(trailId))
-      const overlap = Math.max(1.25, cellSize * 0.14)
-      sheetCtx.fillStyle = style
-      sheetCtx.beginPath()
-      sheetCtx.roundRect(x * cellSize, y * cellSize, cellSize + overlap, cellSize + overlap, [
-        tl ? radius : 0,
-        tr ? radius : 0,
-        br ? radius : 0,
-        bl ? radius : 0,
-      ])
-      sheetCtx.fill()
-      if (ownerAt(x + 1, y + 1) === id && !same(x + 1, y) && !same(x, y + 1)) {
+      if (style !== lastStyle) {
+        sheetCtx.fillStyle = style
+        lastStyle = style
+      }
+      if (up === id && down === id && left === id && right === id) {
+        // Interior: no rounded corners, no seam check needed.
+        sheetCtx.fillRect(x * cellSize, y * cellSize, size, size)
+        continue
+      }
+      const tl = up !== id && left !== id
+      const tr = up !== id && right !== id
+      const br = down !== id && right !== id
+      const bl = down !== id && left !== id
+      if (!tl && !tr && !br && !bl) {
+        sheetCtx.fillRect(x * cellSize, y * cellSize, size, size)
+      } else {
+        sheetCtx.beginPath()
+        sheetCtx.roundRect(x * cellSize, y * cellSize, size, size, [
+          tl ? radius : 0,
+          tr ? radius : 0,
+          br ? radius : 0,
+          bl ? radius : 0,
+        ])
+        sheetCtx.fill()
+      }
+      const diag = x + 1 < w && y + 1 < h ? (trail[index + w + 1] || land[index + w + 1] || 0) : -1
+      if (diag === id && right !== id && down !== id) {
         const seam = cellSize * 0.72
         sheetCtx.fillRect((x + 1) * cellSize - seam / 2, (y + 1) * cellSize - seam / 2, seam, seam)
       }
     }
   }
+  rebuildGlow(width, height)
 }
 
-function drawHead(x, y, cell, body) {
+// Downscaled blurred copy for the neon glow. Blurring a small canvas once
+// per map change is far cheaper than ctx.filter='blur(12px)' every frame.
+function rebuildGlow(width, height) {
+  const scale = 0.5
+  const gw = Math.max(1, Math.round(width * scale))
+  const gh = Math.max(1, Math.round(height * scale))
+  if (glow.width !== gw || glow.height !== gh) {
+    glow.width = gw
+    glow.height = gh
+  }
+  glowCtx.setTransform(1, 0, 0, 1, 0, 0)
+  glowCtx.clearRect(0, 0, gw, gh)
+  try {
+    glowCtx.filter = 'blur(6px)'
+  } catch {
+    // Older browsers ignore filter; the plain downscaled copy still glows
+    // when drawn back with 'lighter'.
+  }
+  glowCtx.drawImage(sheet, 0, 0, gw, gh)
+  try {
+    glowCtx.filter = 'none'
+  } catch {
+    // ignore
+  }
+}
+
+function drawHead(x, y, cell, body, showNames = true) {
   const radius = Math.max(3, cell * 0.34)
-  ctx.save()
-  ctx.translate(x, y)
-  ctx.rotate(body.heading || 0)
-  ctx.shadowColor = body.color
-  ctx.shadowBlur = 18
+  // Cheap neon: a translucent underlay instead of shadowBlur (shadowBlur
+  // forces a full blur pass per head, per frame).
+  ctx.fillStyle = body.color
+  ctx.globalAlpha = 0.22
+  ctx.beginPath()
+  ctx.arc(x, y, radius * 1.9, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.globalAlpha = 1
+  const heading = body.heading || 0
+  const cos = Math.cos(heading)
+  const sin = Math.sin(heading)
   ctx.beginPath()
   ctx.fillStyle = body.color
-  ctx.arc(0, 0, radius, 0, Math.PI * 2)
+  ctx.arc(x, y, radius, 0, Math.PI * 2)
   ctx.fill()
-  ctx.shadowBlur = 0
   if (body.id === myId && phase !== 'over') {
-    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 170)
+    const pulse = REDUCED_MOTION ? 0.5 : 0.5 + 0.5 * Math.sin(performance.now() / 170)
     ctx.beginPath()
-    ctx.arc(0, 0, radius * (1.8 + 0.7 * pulse), 0, Math.PI * 2)
+    ctx.arc(x, y, radius * (1.8 + 0.7 * pulse), 0, Math.PI * 2)
     ctx.strokeStyle = body.color
     ctx.globalAlpha = 0.65 - 0.45 * pulse
     ctx.lineWidth = 2.5
-    ctx.shadowColor = body.color
-    ctx.shadowBlur = 14
     ctx.stroke()
     ctx.globalAlpha = 1
-    ctx.shadowBlur = 0
   }
+  // Nose showing heading. Rotated by hand to avoid save/translate/rotate
+  // per head.
+  const nx = x + cos * radius * 0.2
+  const ny = y + sin * radius * 0.2
+  const px = -sin
+  const py = cos
   ctx.fillStyle = '#f4fff8'
-  ctx.fillRect(radius * 0.2, -radius * 0.18, radius * 0.9, radius * 0.36)
-  ctx.restore()
-  if (cell < 8) return
-  ctx.font = '12px ui-sans-serif, system-ui, sans-serif'
-  ctx.textAlign = 'center'
+  ctx.beginPath()
+  ctx.moveTo(nx + cos * radius * 0.9 + px * radius * 0.18, ny + sin * radius * 0.9 + py * radius * 0.18)
+  ctx.lineTo(nx + cos * radius * 0.9 - px * radius * 0.18, ny + sin * radius * 0.9 - py * radius * 0.18)
+  ctx.lineTo(nx - cos * radius * 0.35 - px * radius * 0.18, ny - sin * radius * 0.35 - py * radius * 0.18)
+  ctx.lineTo(nx - cos * radius * 0.35 + px * radius * 0.18, ny - sin * radius * 0.35 + py * radius * 0.18)
+  ctx.closePath()
+  ctx.fill()
+  if (!showNames) return
   ctx.lineWidth = 3
   ctx.strokeStyle = '#070910'
   ctx.strokeText(body.name, x, y - radius - 8)
@@ -821,6 +1140,14 @@ card.addEventListener('submit', (event) => {
   error.textContent = ''
   send({ type: 'join', name, token: sessionStorage.getItem('territory-token') || '' })
   sfx.startMusic()
+})
+
+hostRoomBtn.addEventListener('click', hostOnlineRoom)
+joinRoomBtn.addEventListener('click', joinOnlineRoom)
+codeInput.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return
+  event.preventDefault()
+  joinOnlineRoom()
 })
 
 nick.addEventListener('keydown', (event) => {

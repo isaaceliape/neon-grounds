@@ -1,0 +1,42 @@
+# Static site: online rooms run entirely in browsers (WebRTC), so the
+# game can be hosted on GitHub Pages with no server.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir -p dist
+          cp public/client.js public/fx.js public/index.html public/p2p.js public/peerjs.min.js public/sfx.js public/style.css public/view-helpers.js dist/
+          # host-session.js imports ./game.js; ship the single server copy next to it.
+          cp server/game.js dist/game.js
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -25,22 +25,24 @@ globalThis.viewHelpers = (() => {
 
   // Which walls the head is driving toward and how close it is.
   // strength is 0 at `range` cells away and 1 at the wall. Walls the head is
-  // moving along or away from are left out.
+  // moving along or away from are left out. Allocation-free fast path: most
+  // frames the head is mid-map and this returns null without building arrays.
   function wallWarnings(x, y, heading, w, h, range = 8) {
     const vx = Math.cos(heading)
     const vy = Math.sin(heading)
-    const sides = [
-      { side: 'left', d: x, toward: -vx },
-      { side: 'right', d: w - x, toward: vx },
-      { side: 'top', d: y, toward: -vy },
-      { side: 'bottom', d: h - y, toward: vy },
-    ]
-    const out = []
-    for (const { side, d, toward } of sides) {
-      if (d >= range || toward < 0.2) continue
-      const closeness = 1 - Math.max(0, d) / range
-      out.push({ side, strength: closeness * Math.min(1, toward * 1.4) })
+    // Fast path: far from every wall heading toward it is the common case.
+    if (x >= range || -vx < 0.2) {
+      if ((w - x >= range || vx < 0.2) && (y >= range || -vy < 0.2) && (h - y >= range || vy < 0.2)) return []
     }
+    const out = []
+    const dl = x
+    if (dl < range && -vx >= 0.2) out.push({ side: 'left', strength: (1 - Math.max(0, dl) / range) * Math.min(1, -vx * 1.4) })
+    const dr = w - x
+    if (dr < range && vx >= 0.2) out.push({ side: 'right', strength: (1 - Math.max(0, dr) / range) * Math.min(1, vx * 1.4) })
+    const dt = y
+    if (dt < range && -vy >= 0.2) out.push({ side: 'top', strength: (1 - Math.max(0, dt) / range) * Math.min(1, -vy * 1.4) })
+    const db = h - y
+    if (db < range && vy >= 0.2) out.push({ side: 'bottom', strength: (1 - Math.max(0, db) / range) * Math.min(1, vy * 1.4) })
     return out
   }
 
