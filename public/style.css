@@ -480,6 +480,7 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 }
 
 /* sound toggle */
+#music,
 #mute {
   position: fixed;
   right: 16px;
@@ -489,6 +490,11 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   font-size: 13px;
 }
 
+#music {
+  bottom: 56px;
+}
+
+#music[aria-pressed="false"],
 #mute[aria-pressed="false"] {
   color: var(--muted);
   border-color: rgba(142, 160, 184, 0.5);
@@ -585,5 +591,6 @@ html { overscroll-behavior: none; }
   #clock { top: 8px; font-size: 22px; padding: 4px 10px; }
   #clock.count { font-size: 60px; }
   #mute { bottom: auto; top: 106px; right: 8px; }
-  #feed { top: 146px; right: 8px; width: 190px; }
+  #music { bottom: auto; top: 146px; right: 8px; }
+  #feed { top: 186px; right: 8px; width: 190px; }
 }

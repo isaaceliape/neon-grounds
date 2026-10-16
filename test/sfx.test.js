@@ -6,11 +6,14 @@ import vm from 'node:vm'
 const source = readFileSync(new URL('../public/sfx.js', import.meta.url), 'utf8')
 
 // Minimal stand-ins for the Web Audio API that count what the code does.
-function makeEnv({ stored = null, withAudio = true } = {}) {
+function makeEnv({ stored = null, musicStored = null, withAudio = true } = {}) {
   const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [] }
   const timers = []
   const cleared = []
-  const store = new Map(stored == null ? [] : [['territory-mute', stored]])
+  const entries = []
+  if (stored != null) entries.push(['territory-mute', stored])
+  if (musicStored != null) entries.push(['territory-music-mute', musicStored])
+  const store = new Map(entries)
   const param = () => ({ value: 1, setValueAtTime() {}, exponentialRampToValueAtTime() {} })
   const node = () => ({ connect() {} })
 
@@ -166,6 +169,37 @@ test('mute silences the theme too', () => {
   assert.equal(stats.oscillators, before)
 })
 
+test('music has its own mute, independent of effects', () => {
+  const { sfx, stats, store, listeners, timers } = makeEnv()
+  listeners.pointerdown()
+  sfx.startMusic()
+  sfx.setMusicMuted(true)
+  assert.equal(sfx.isMusicMuted(), true)
+  assert.equal(store.get('territory-music-mute'), '1')
+  const before = stats.oscillators
+  timers[0]()
+  assert.equal(stats.oscillators, before, 'theme stays silent')
+  const effects = stats.oscillators
+  sfx.tick()
+  assert.ok(stats.oscillators > effects, 'effects still sound')
+  sfx.setMusicMuted(false)
+  assert.equal(store.get('territory-music-mute'), '0')
+  stats.created[0].currentTime = 5
+  timers[0]()
+  assert.ok(stats.oscillators > effects + 1, 'theme returns')
+})
+
+test('a saved music mute is restored on the next load', () => {
+  const { sfx, stats, listeners, timers } = makeEnv({ musicStored: '1' })
+  assert.equal(sfx.isMusicMuted(), true)
+  assert.equal(sfx.isMuted(), false)
+  listeners.pointerdown()
+  sfx.startMusic()
+  const before = stats.oscillators
+  timers[0]()
+  assert.equal(stats.oscillators, before)
+})
+
 test('music is a no-op without Web Audio', () => {
   const { sfx, listeners } = makeEnv({ withAudio: false })
   assert.doesNotThrow(() => {
@@ -174,6 +208,8 @@ test('music is a no-op without Web Audio', () => {
     listeners.pointerdown()
     sfx.stopMusic()
     assert.equal(sfx.isMusicPlaying(), false)
+    sfx.setMusicMuted(true)
+    assert.equal(sfx.isMusicMuted(), true)
   })
 })
 test('browsers without Web Audio get silent no-ops, not errors', () => {

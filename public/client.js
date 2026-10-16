@@ -81,6 +81,7 @@ const goEl = document.querySelector('#go')
 const feed = document.querySelector('#feed')
 const howto = document.querySelector('#howto')
 const muteBtn = document.querySelector('#mute')
+const musicBtn = document.querySelector('#music')
 const touchPad = document.querySelector('#touch')
 const touchLeft = document.querySelector('#touch-left')
 const touchRight = document.querySelector('#touch-right')
@@ -864,6 +865,18 @@ muteBtn.addEventListener('click', () => {
   paintMute()
 })
 paintMute()
+
+function paintMusic() {
+  const off = sfx.isMusicMuted()
+  musicBtn.textContent = off ? 'Music off' : 'Music on'
+  musicBtn.setAttribute('aria-pressed', String(!off))
+}
+
+musicBtn.addEventListener('click', () => {
+  sfx.setMusicMuted(!sfx.isMusicMuted())
+  paintMusic()
+})
+paintMusic()
 
 const heldTurn = { left: false, right: false }
 

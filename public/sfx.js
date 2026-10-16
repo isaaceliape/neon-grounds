@@ -3,16 +3,21 @@
 // browsers block audio before a gesture. If Web Audio is missing, every call is a no-op.
 globalThis.sfx = (() => {
   const STORE_KEY = 'territory-mute'
+  const MUSIC_STORE_KEY = 'territory-music-mute'
   const VOLUME = 0.25
+  const MUSIC_VOLUME = 0.5
 
   let ctx = null
   let master = null
   let music = null
   let muted = false
+  let musicMuted = false
   try {
     muted = globalThis.localStorage?.getItem(STORE_KEY) === '1'
+    musicMuted = globalThis.localStorage?.getItem(MUSIC_STORE_KEY) === '1'
   } catch {
     muted = false
+    musicMuted = false
   }
 
   function create() {
@@ -26,7 +31,7 @@ globalThis.sfx = (() => {
     // The background theme gets its own bus so it can sit quietly under
     // the effects. Muting the master silences it too.
     music = ctx.createGain()
-    music.gain.value = 0.5
+    music.gain.value = musicMuted ? 0 : MUSIC_VOLUME
     music.connect(master)
     return ctx
   }
@@ -51,6 +56,21 @@ globalThis.sfx = (() => {
 
   function isMuted() {
     return muted
+  }
+
+  // The theme has its own mute so it can be silenced without losing effects.
+  function setMusicMuted(value) {
+    musicMuted = Boolean(value)
+    try {
+      globalThis.localStorage?.setItem(MUSIC_STORE_KEY, musicMuted ? '1' : '0')
+    } catch {
+      // storage can be unavailable; the setting then lasts until reload
+    }
+    if (music) music.gain.value = musicMuted ? 0 : MUSIC_VOLUME
+  }
+
+  function isMusicMuted() {
+    return musicMuted
   }
 
   // One enveloped oscillator note.
@@ -163,7 +183,7 @@ globalThis.sfx = (() => {
 
   // One theme note at an absolute context time, on the music bus.
   function musicTone(freq, when, length, { type = 'sine', gain = 0.1 } = {}) {
-    if (!ctx || muted) return
+    if (!ctx || muted || musicMuted) return
     const osc = ctx.createOscillator()
     const amp = ctx.createGain()
     osc.type = type
@@ -226,5 +246,5 @@ globalThis.sfx = (() => {
     return playing
   }
 
-  return { unlock, setMuted, isMuted, capture, death, tick, go, win, lose, startMusic, stopMusic, isMusicPlaying }
+  return { unlock, setMuted, isMuted, setMusicMuted, isMusicMuted, capture, death, tick, go, win, lose, startMusic, stopMusic, isMusicPlaying }
 })()
