@@ -7,7 +7,9 @@ const source = readFileSync(new URL('../public/sfx.js', import.meta.url), 'utf8'
 
 // Minimal stand-ins for the Web Audio API that count what the code does.
 function makeEnv({ stored = null, withAudio = true } = {}) {
-  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null }
+  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [] }
+  const timers = []
+  const cleared = []
   const store = new Map(stored == null ? [] : [['territory-mute', stored]])
   const param = () => ({ value: 1, setValueAtTime() {}, exponentialRampToValueAtTime() {} })
   const node = () => ({ connect() {} })
@@ -15,6 +17,7 @@ function makeEnv({ stored = null, withAudio = true } = {}) {
   class FakeAudioContext {
     constructor() {
       stats.contexts += 1
+      stats.created.push(this)
       this.state = 'suspended'
       this.currentTime = 0
       this.sampleRate = 8000
@@ -59,8 +62,10 @@ function makeEnv({ stored = null, withAudio = true } = {}) {
   }
   if (withAudio) sandbox.AudioContext = FakeAudioContext
   sandbox.globalThis = sandbox
+  sandbox.setInterval = (fn) => { timers.push(fn); return timers.length }
+  sandbox.clearInterval = (id) => { cleared.push(id) }
   vm.runInNewContext(source, sandbox)
-  return { sfx: sandbox.sfx, stats, store, listeners }
+  return { sfx: sandbox.sfx, stats, store, listeners, timers, cleared }
 }
 
 test('no audio context is created before the first user gesture', () => {
@@ -124,6 +129,53 @@ test('a saved mute is restored on the next load', () => {
   assert.equal(stats.masterGain.gain.value, 0)
 })
 
+test('theme music waits for a gesture, then loops', () => {
+  const { sfx, stats, listeners, timers } = makeEnv()
+  sfx.startMusic()
+  assert.equal(sfx.isMusicPlaying(), true)
+  assert.equal(stats.contexts, 0)
+  assert.equal(timers.length, 0)
+  listeners.pointerdown()
+  assert.equal(timers.length, 1)
+  const before = stats.oscillators
+  timers[0]()
+  assert.ok(stats.oscillators > before, 'scheduled loop notes')
+  stats.created[0].currentTime = 5
+  const mid = stats.oscillators
+  timers[0]()
+  assert.ok(stats.oscillators > mid, 'keeps scheduling as time advances')
+})
+
+test('stopMusic halts the loop', () => {
+  const { sfx, listeners, timers, cleared } = makeEnv()
+  listeners.pointerdown()
+  sfx.startMusic()
+  assert.equal(timers.length, 1)
+  sfx.stopMusic()
+  assert.equal(sfx.isMusicPlaying(), false)
+  assert.deepEqual(cleared, [1])
+})
+
+test('mute silences the theme too', () => {
+  const { sfx, stats, listeners, timers } = makeEnv()
+  listeners.pointerdown()
+  sfx.startMusic()
+  sfx.setMuted(true)
+  const before = stats.oscillators
+  timers[0]()
+  assert.equal(stats.oscillators, before)
+})
+
+test('music is a no-op without Web Audio', () => {
+  const { sfx, listeners } = makeEnv({ withAudio: false })
+  assert.doesNotThrow(() => {
+    sfx.startMusic()
+    assert.equal(sfx.isMusicPlaying(), true)
+    listeners.pointerdown()
+    sfx.stopMusic()
+    assert.equal(sfx.isMusicPlaying(), false)
+  })
+})
 test('browsers without Web Audio get silent no-ops, not errors', () => {
   const { sfx, listeners } = makeEnv({ withAudio: false })
   assert.doesNotThrow(() => {

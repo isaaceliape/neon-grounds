@@ -819,6 +819,7 @@ card.addEventListener('submit', (event) => {
   localStorage.setItem('territory-name', name)
   error.textContent = ''
   send({ type: 'join', name, token: sessionStorage.getItem('territory-token') || '' })
+  sfx.startMusic()
 })
 
 nick.addEventListener('keydown', (event) => {

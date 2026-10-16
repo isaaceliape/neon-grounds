@@ -136,6 +136,8 @@ Effects: closing a loop flashes the taken ground and shows how much you took. A 
 
 Short synthesized sounds play for captures, deaths, the countdown, GO, and the end of a round. There are no audio files. Browsers only allow sound after you click or press a key, so the first sound comes after that. The Sound on/off button, bottom right, mutes everything, and the choice is saved in this browser.
 
+A looping theme (lead, bass, and hats over Am F C G, about 8 seconds per loop) starts once you join and keeps playing behind the round. It runs through the same mute button. Retune it in `public/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
+
 ## Wins this session
 
 The waiting room and the score screen show a small "1 win" or "3 wins" next to a name. The server counts rounds won by name since it started. A draw adds nothing. Restarting the server resets the counts. The full history stays in `logs/results.log`.
