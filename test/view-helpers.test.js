@@ -137,3 +137,15 @@ test('touch helpers: held buttons make a turn, and phones get smaller cells', ()
   assert.equal(followCellSize(360), 360 / 26, 'phone width shrinks the cell')
   assert.equal(followCellSize(200), 12, 'never smaller than 12px')
 })
+
+test('invite links carry the room code for the join screen', () => {
+  const { roomInviteLink } = loadHelpers()
+  assert.equal(
+    roomInviteLink('https://isaaceliape.github.io/territory/', 'tbftu'),
+    'https://isaaceliape.github.io/territory/?code=TBFTU',
+  )
+  assert.equal(
+    roomInviteLink('http://localhost:4174/', 'ABCDE'),
+    'http://localhost:4174/?code=ABCDE',
+  )
+})

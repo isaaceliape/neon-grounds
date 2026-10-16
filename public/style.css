@@ -159,11 +159,19 @@ h1 {
 #error { color: #ff4d6d; text-shadow: 0 0 8px rgba(255, 77, 109, 0.7); min-height: 0; }
 #error:empty, #waiting:empty, #link-note:empty { display: none; }
 
-#join-row, #room, #online-row { display: grid; gap: 8px; }
+#join-row, #room, #online-row, #picker, #host-setup, #join-setup { display: grid; gap: 8px; }
 
-#online-note { margin: 6px 0 0; }
+#pick-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-#join-room-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+#pick-row button { padding: 18px 10px; font-size: 18px; font-weight: 800; }
+
+#pick-hint { margin: 2px 0 0; }
+
+button.ghost { background: transparent; border-color: var(--line); color: var(--muted); box-shadow: none; }
+
+#invite-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+#invite-row button { flex: 1; white-space: nowrap; }
 
 #code { text-transform: uppercase; letter-spacing: 0.2em; }
 
@@ -171,7 +179,7 @@ h1 {
 
 #room-code strong { font-size: 28px; letter-spacing: 0.3em; color: var(--glow); text-shadow: 0 0 12px rgba(57, 255, 210, 0.7); }
 
-#room-code:empty, #online-note:empty { display: none; }
+#room-code:empty, #pick-hint:empty { display: none; }
 
 label { font-size: 14px; color: var(--muted); }
 
@@ -590,6 +598,7 @@ html { overscroll-behavior: none; }
   h1 { font-size: 34px; }
   #overlay { padding: 12px; }
   #howto li { font-size: 11px; }
+  #pick-row { grid-template-columns: 1fr; }
 }
 
 /* phones held sideways: less height, so smaller buttons */

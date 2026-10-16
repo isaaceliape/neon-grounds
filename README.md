@@ -19,7 +19,7 @@ Stop the server with Ctrl+C in that terminal. Closing a browser does not stop th
 
 ## Online rooms (no VPN)
 
-The page can also host a room with no server at all. One player clicks **Host online room** and shares the 5-letter room code. Everyone else opens the same page anywhere on the internet, types their name and the code, and clicks **Join room**. The same 12 seats and 3 bots apply.
+Opening the page shows two choices: **Host a session** or **Join a session**. The host types their name and gets a 5-letter room code plus a one-tap invite link (`?code=` URL that fills the code in for guests). Everyone else opens the page or the link anywhere on the internet, types their name and the code, and joins. The same 12 seats and 3 bots apply.
 
 The host's browser runs the round, peer to peer over WebRTC. The host must keep the page open: if the host's tab closes, the room ends for everyone. Losing the connection briefly is fine; guests rejoin automatically for about 10 seconds, same as a dropped tab on the local server.
 

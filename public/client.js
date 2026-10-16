@@ -17,10 +17,23 @@ const roster = document.querySelector('#roster')
 const share = document.querySelector('#share')
 const lengthLabel = document.querySelector('#length-label')
 const minutes = document.querySelector('#minutes')
-const onlineRow = document.querySelector('#online-row')
+const picker = document.querySelector('#picker')
+const pickHostBtn = document.querySelector('#pick-host')
+const pickJoinBtn = document.querySelector('#pick-join')
+const hostSetup = document.querySelector('#host-setup')
+const hostNameInput = document.querySelector('#host-name')
+const hostBackBtn = document.querySelector('#host-back')
+const joinSetup = document.querySelector('#join-setup')
+const guestNameInput = document.querySelector('#guest-name')
+const joinBackBtn = document.querySelector('#join-back')
 const hostRoomBtn = document.querySelector('#host-room')
 const codeInput = document.querySelector('#code')
 const joinRoomBtn = document.querySelector('#join-room')
+const inviteRow = document.querySelector('#invite-row')
+const copyCodeBtn = document.querySelector('#copy-code')
+const copyLinkBtn = document.querySelector('#copy-link')
+const queryParams = new URLSearchParams(location.search)
+const LOCAL_DEV = queryParams.has('local')
 const roomCodeEl = document.querySelector('#room-code')
 const startBtn = document.querySelector('#start')
 const addBotBtn = document.querySelector('#add-bot')
@@ -117,7 +130,10 @@ let guestQueue = []
 let guestRoom = null // { code, name, token, redials }
 const trailColors = new Map()
 
-nameInput.value = localStorage.getItem('territory-name') || ''
+const savedName = localStorage.getItem('territory-name') || ''
+hostNameInput.value = savedName
+guestNameInput.value = savedName
+nameInput.value = savedName
 
 function send(obj) {
   if (netMode === 'host') {
@@ -189,10 +205,10 @@ function lockOnlineButtons(locked) {
 // Host an online room: this browser runs the sim (host-session.js) and
 // guests connect over WebRTC. The host also plays, via a local loopback.
 async function hostOnlineRoom() {
-  const name = nameInput.value.trim()
+  const name = hostNameInput.value.trim()
   if (!name) {
     error.textContent = 'Type a name first.'
-    nameInput.focus()
+    hostNameInput.focus()
     return
   }
   if (netMode !== 'local') return
@@ -257,10 +273,10 @@ async function hostOnlineRoom() {
 // Join someone's room with their code. Redials for ~12s if the connection
 // drops, so the host's 10s seat freeze covers a blip or tab reload.
 function joinOnlineRoom() {
-  const name = nameInput.value.trim()
+  const name = guestNameInput.value.trim()
   if (!name) {
     error.textContent = 'Type a name first.'
-    nameInput.focus()
+    guestNameInput.focus()
     return
   }
   const code = window.P2P ? window.P2P.normalizeCode(codeInput.value) : ''
@@ -559,10 +575,22 @@ function showJoin() {
   howto.hidden = false
   overlay.hidden = false
   hud.hidden = true
-  joinRow.hidden = false
-  onlineRow.hidden = false
+  joinRow.hidden = !LOCAL_DEV
   room.hidden = true
   blurb.textContent = RULES
+  const inviteCode = window.P2P ? window.P2P.normalizeCode(queryParams.get('code')) : ''
+  if (inviteCode) {
+    // Arrived via an invite link: skip the picker, go straight to joining.
+    picker.hidden = true
+    hostSetup.hidden = true
+    joinSetup.hidden = false
+    codeInput.value = inviteCode
+    guestNameInput.focus()
+    return
+  }
+  picker.hidden = false
+  hostSetup.hidden = true
+  joinSetup.hidden = true
 }
 
 function showCard(msg) {
@@ -580,8 +608,10 @@ function showCard(msg) {
   blurb.classList.toggle('winner', Boolean(champion))
   if (champion) blurb.style.setProperty('--win', champion.color)
   const host = myId != null && myId === hostId
-  joinRow.hidden = joined
-  onlineRow.hidden = joined
+  joinRow.hidden = joined || !LOCAL_DEV
+  picker.hidden = joined
+  hostSetup.hidden = joined
+  joinSetup.hidden = joined
   room.hidden = !joined
   results.hidden = !ended
   lengthLabel.hidden = !host || ended
@@ -705,6 +735,7 @@ function renderShare(show) {
   share.replaceChildren()
   roomCodeEl.replaceChildren()
   roomCodeEl.hidden = true
+  inviteRow.hidden = true
   if (!show) return
   if (hostedCode) {
     const label = document.createElement('span')
@@ -712,9 +743,10 @@ function renderShare(show) {
     const code = document.createElement('strong')
     code.textContent = hostedCode
     const hint = document.createElement('span')
-    hint.textContent = ' — friends open this page anywhere, type the code, and join.'
+    hint.textContent = ' — share the code or the invite link below.'
     roomCodeEl.append(label, code, hint)
     roomCodeEl.hidden = false
+    inviteRow.hidden = false
     return
   }
   const title = document.createElement('p')
@@ -1150,6 +1182,62 @@ codeInput.addEventListener('keydown', (event) => {
   joinOnlineRoom()
 })
 
+function showSetup(which) {
+  error.textContent = ''
+  picker.hidden = which !== 'picker'
+  hostSetup.hidden = which !== 'host'
+  joinSetup.hidden = which !== 'join'
+  if (which === 'host') hostNameInput.focus()
+  if (which === 'join') {
+    if (!codeInput.value) guestNameInput.focus()
+    else codeInput.focus()
+  }
+}
+
+pickHostBtn.addEventListener('click', () => showSetup('host'))
+pickJoinBtn.addEventListener('click', () => showSetup('join'))
+hostBackBtn.addEventListener('click', () => showSetup('picker'))
+joinBackBtn.addEventListener('click', () => showSetup('picker'))
+hostNameInput.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return
+  event.preventDefault()
+  hostOnlineRoom()
+})
+guestNameInput.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return
+  event.preventDefault()
+  joinOnlineRoom()
+})
+
+async function copyText(text, button, doneLabel = 'Copied!') {
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch {
+    const temp = document.createElement('textarea')
+    temp.value = text
+    document.body.append(temp)
+    temp.select()
+    try {
+      document.execCommand('copy')
+    } catch {
+      // Clipboard unavailable; the code stays visible to type over.
+    }
+    temp.remove()
+  }
+  const original = button.textContent
+  button.textContent = doneLabel
+  setTimeout(() => {
+    button.textContent = original
+  }, 1500)
+}
+
+copyCodeBtn.addEventListener('click', () => {
+  if (hostedCode) copyText(hostedCode, copyCodeBtn)
+})
+copyLinkBtn.addEventListener('click', () => {
+  if (hostedCode) copyText(viewHelpers.roomInviteLink(location.origin + location.pathname, hostedCode), copyLinkBtn)
+})
+
 nick.addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return
   event.preventDefault()
@@ -1261,5 +1349,8 @@ window.addEventListener('keyup', (event) => {
   if (myId && (phase === 'countdown' || phase === 'play')) sendTurn()
 })
 
-connect()
+// The local Node server is a dev path now (?local). The public game is
+// online rooms only, so no WebSocket is opened unless asked for.
+if (LOCAL_DEV) connect()
+showJoin()
 requestAnimationFrame(frame)

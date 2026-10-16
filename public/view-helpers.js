@@ -74,6 +74,13 @@ globalThis.viewHelpers = (() => {
     return dx * dx + dy * dy < range * range
   }
 
+  // Shareable invite link: opening it lands the guest on the join screen
+  // with the room code already filled in.
+  function roomInviteLink(base, code) {
+    const clean = String(base ?? '').replace(/\?$/, '')
+    return `${clean}?code=${encodeURIComponent(String(code ?? '').toUpperCase())}`
+  }
+
   // "1 win" / "3 wins" for the session counter, or '' when there are none.
   function winsLabel(wins, name) {
     const count = wins?.[String(name).toLowerCase()] ?? 0
@@ -111,6 +118,7 @@ globalThis.viewHelpers = (() => {
     botCount,
     botLabel,
     winsLabel,
+    roomInviteLink,
     isEnded, listedPlayers, peopleForNick, winnerText,
     wallWarnings, deathFeedText, captureFeedText, isDangerCell,
   }
