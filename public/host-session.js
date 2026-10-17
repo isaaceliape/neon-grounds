@@ -35,14 +35,22 @@ function randomHex(bytes) {
 // btoa works on binary strings; chunk the conversion so huge snapshots do
 // not blow the argument limit of String.fromCharCode(...big).
 function u8ToBase64(u8) {
+  const bytes = u8 instanceof Uint8Array ? u8 : new Uint8Array(u8)
   let s = ''
-  for (let i = 0; i < u8.length; i += 0x8000) {
-    s += String.fromCharCode(...u8.subarray(i, i + 0x8000))
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
   }
   return btoa(s)
 }
 
-export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver = () => {}, onBroadcast = () => {} } = {}) {
+function base64ToU8(text) {
+  const bin = atob(text)
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i += 1) out[i] = bin.charCodeAt(i)
+  return out
+}
+
+export function createHostSession({ gameOptions = {}, roomCode = '', initial = null, onDeliver = () => {}, onBroadcast = () => {} } = {}) {
   const game = createGame(gameOptions)
   const tokens = new Map() // token -> player id
   const guests = new Map() // key -> { playerId, token, queuedName, watcher }
@@ -51,6 +59,26 @@ export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver =
   const wins = new Map() // lowercase name -> session wins
   const urls = { local: '', shared: [] }
   let closed = false
+  let ticksSinceMigrate = 0
+
+  if (initial) {
+    // Taking over a room whose host went away. Guests rejoin with their
+    // old tokens and keep their seats.
+    const land = base64ToU8(initial.game.landB64)
+    const trail = base64ToU8(initial.game.trailB64)
+    const ok = game.importState({ ...initial.game, land: [...land], trail: [...trail] }, {
+      downId: initial.downId ?? null,
+      hostId: initial.hostId ?? null,
+    })
+    if (!ok) throw new Error('Migration state did not match this game.')
+    for (const [name, count] of Object.entries(initial.wins ?? {})) wins.set(name, count)
+    for (const [token, id] of Object.entries(initial.tokens ?? {})) tokens.set(token, id)
+    // Seats survive the takeover: everyone absent gets a long grace window
+    // to redial with their old token.
+    for (const id of new Set(tokens.values())) {
+      if (id !== initial.hostId && game.player(id)) scheduleDrop(id, null, 60_000)
+    }
+  }
 
   function sendTo(key, obj) {
     if (closed) return
@@ -90,6 +118,22 @@ export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver =
 
   function pushLobby() {
     broadcast(lobby())
+    pushMigrate()
+  }
+
+  // Full takeover state for guests, in case this browser goes away. Small
+  // enough to repeat: ~60KB every 30 ticks plus alongside lobby pushes.
+  function pushMigrate() {
+    const { land, trail, ...rest } = game.exportState()
+    broadcast({
+      type: 'migrate',
+      roomCode,
+      state: {
+        game: { ...rest, landB64: u8ToBase64(land), trailB64: u8ToBase64(trail) },
+        wins: winsObject(),
+        tokens: Object.fromEntries(tokens),
+      },
+    })
   }
 
   function hello(key) {
@@ -243,6 +287,7 @@ export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver =
         return
       }
       broadcast(snapshot(game.pack(), 'full'))
+      pushMigrate()
     } else if (msg.type === 'bot') {
       if (guest.playerId !== game.hostId) {
         sendTo(key, { type: 'error', message: 'Only the host can add a bot.' })
@@ -275,6 +320,36 @@ export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver =
     }
   }
 
+  function tokenFor(id) {
+    for (const [token, pid] of tokens) {
+      if (pid === id) return token
+    }
+    return null
+  }
+
+  // A seat goes cold: flip it to disconnected now, remove it for good if
+  // nobody rebinds it within ms. Takeovers grant a long grace (60s) since
+  // claiming the room id alone can take half of that.
+  function scheduleDrop(id, key, ms) {
+    const old = dropTimers.get(id)
+    if (old) clearTimeout(old)
+    const timer = setTimeout(() => {
+      dropTimers.delete(id)
+      if (key && guests.get(key)?.playerId !== id) return
+      const phase = game.phase
+      const token = key ? guests.get(key)?.token : tokenFor(id)
+      game.removePlayer(id)
+      if (key) guests.delete(key)
+      if (phase === 'lobby' || phase === 'over') tokens.delete(token)
+      if (game.phase === 'lobby' || game.phase === 'over') {
+        game.vacate()
+        seatWatchers()
+        pushLobby()
+      }
+    }, ms)
+    dropTimers.set(id, timer)
+  }
+
   function guestLeft(key) {
     if (key === LOCAL_KEY) return
     watchers.delete(key)
@@ -290,24 +365,20 @@ export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver =
       return
     }
     player.connected = false
-    const timer = setTimeout(() => {
-      dropTimers.delete(id)
-      if (guests.get(key)?.playerId !== id) return
-      const phase = game.phase
-      game.removePlayer(id)
-      guests.delete(key)
-      if (phase === 'lobby' || phase === 'over') tokens.delete(guest.token)
-      if (game.phase === 'lobby' || game.phase === 'over') {
-        game.vacate()
-        seatWatchers()
-        pushLobby()
-      }
-    }, 10_000)
-    dropTimers.set(id, timer)
+    scheduleDrop(id, key, 10_000)
   }
 
+  let lastPingAt = 0
   const timer = setInterval(() => {
-    if (game.phase !== 'countdown' && game.phase !== 'play') return
+    if (game.phase !== 'countdown' && game.phase !== 'play') {
+      // Idle rooms still heartbeat so guests notice a dead host in lobby.
+      const now = Date.now()
+      if (now - lastPingAt >= 2000) {
+        lastPingAt = now
+        broadcast({ type: 'ping', roomCode })
+      }
+      return
+    }
     const msg = game.tick(Date.now())
     if (msg.phase === 'over') {
       recordWin(msg.scores)
@@ -315,6 +386,11 @@ export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver =
     }
     if (msg.phase === 'over' || msg.resync) broadcast(snapshot(msg, msg.phase === 'over' ? 'over' : 'full'))
     else broadcast(delta(msg))
+    ticksSinceMigrate += 1
+    if (ticksSinceMigrate >= 30) {
+      ticksSinceMigrate = 0
+      pushMigrate()
+    }
   }, game.tickMs)
 
   function close() {
@@ -324,5 +400,12 @@ export function createHostSession({ gameOptions = {}, roomCode = '', onDeliver =
     dropTimers.clear()
   }
 
-  return { game, guestMessage, guestLeft, pushLobby, close }
+  // Lost the room id to another host (network race): stop the sim and tell
+  // any remaining guests to redial, then the caller switches to guest mode.
+  function yieldRoom() {
+    broadcast({ type: 'moved', roomCode })
+    close()
+  }
+
+  return { game, guestMessage, guestLeft, pushLobby, pushMigrate, yieldRoom, close }
 }

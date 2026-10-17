@@ -128,6 +128,15 @@ let hostedCode = ''
 let guestConn = null
 let guestQueue = []
 let guestRoom = null // { code, name, token, redials }
+let claiming = false // a takeover claim is in flight; redial timers stand down
+let dialEpoch = 0 // each dial gets one; drop handling runs once per dial
+let dropHandledEpoch = 0
+// Takeover state: the latest full sim snapshot plus the freshest player
+// list, so a guest can become the host if this browser goes away.
+let lastMigrate = null
+let lastPlayers = null
+let lastHostId = null
+let lastTickAt = 0
 const trailColors = new Map()
 
 const savedName = localStorage.getItem('territory-name') || ''
@@ -240,6 +249,7 @@ async function hostOnlineRoom() {
       onLeave: (key) => {
         if (hostSession) hostSession.guestLeft(key)
       },
+      onIdLost: () => yieldToGuest(),
     })
     hostedCode = await hostNet.ready
     netMode = 'host'
@@ -301,30 +311,175 @@ function joinOnlineRoom() {
   dialGuest()
 }
 
+function giveUpGuest(room, text) {
+  if (guestRoom !== room) return
+  error.textContent = text
+  if (guestConn) {
+    const conn = guestConn
+    guestConn = null
+    try {
+      conn.close()
+    } catch {
+      // ignore
+    }
+  }
+  guestRoom = null
+  guestQueue = []
+  lastMigrate = null
+  claiming = false
+  netMode = 'local'
+  lockOnlineButtons(false)
+  connect()
+}
+
+// The DataChannel to the host dropped. Blips redial fast; a gone host
+// triggers the takeover election (see electSuccessor): the lowest-id
+// remaining player claims the same room code, everyone else waits.
+function handleGuestDrop(epoch) {
+  if (epoch <= dropHandledEpoch) return
+  dropHandledEpoch = epoch
+  guestConn = null
+  if (netMode !== 'guest' || !guestRoom) return
+  guestRoom.redials += 1
+  guestStep(guestRoom)
+}
+
+function guestStep(room) {
+  if (netMode !== 'guest' || guestRoom !== room || claiming) return
+  if (room.redials > 40) {
+    giveUpGuest(room, 'Lost the room. Check the code and join again.')
+    return
+  }
+  if (room.redials <= 8) {
+    error.textContent = 'Connection lost. Rejoining...'
+    setTimeout(() => {
+      if (!claiming) dialGuest()
+    }, 1500)
+    return
+  }
+  const successor = viewHelpers.electSuccessor(lastPlayers, lastHostId)
+  if (successor === myId && myId != null) {
+    if (lastMigrate) {
+      attemptTakeover(room)
+      return
+    }
+    giveUpGuest(room, 'The host left before any game state arrived. Host a new room to keep playing.')
+    return
+  }
+  error.textContent = successor != null ? 'Host left. Finding a new host...' : 'Connection lost. Rejoining...'
+  setTimeout(() => {
+    if (!claiming) dialGuest()
+  }, 1500)
+}
+
+// Become the new host: claim the same room code, restore the sim from the
+// cached migration snapshot, and keep playing. Guests rejoin with their
+// old tokens and keep their seats.
+async function attemptTakeover(room) {
+  claiming = true
+  error.textContent = 'Host left. Starting a new host...'
+  guestRoom = null
+  try {
+    const mod = await import('./host-session.js')
+    const claim = window.P2P.claimRoom({
+      code: room.code,
+      tries: 45,
+      delayMs: 1000,
+      onMessage: (key, msg) => {
+        if (hostSession) hostSession.guestMessage(key, msg)
+      },
+      onLeave: (key) => {
+        if (hostSession) hostSession.guestLeft(key)
+      },
+      onIdLost: () => yieldToGuest(),
+    })
+    await claim.ready
+    if (netMode !== 'guest' || !lastMigrate) {
+      claim.close()
+      throw new Error('Stopped.')
+    }
+    const deliver = (key, obj) => {
+      if (key === mod.LOCAL_KEY) onMessage(obj)
+      else if (hostNet) hostNet.sendTo(key, obj)
+    }
+    const broadcastAll = (obj) => {
+      onMessage(obj)
+      if (hostNet) hostNet.broadcast(obj)
+    }
+    hostSession = mod.createHostSession({
+      roomCode: room.code,
+      initial: { ...lastMigrate.state, hostId: myId, downId: lastHostId },
+      onDeliver: deliver,
+      onBroadcast: broadcastAll,
+    })
+    hostLocalKey = mod.LOCAL_KEY
+    if (guestConn) {
+      const conn = guestConn
+      guestConn = null
+      try {
+        conn.close()
+      } catch {
+        // ignore
+      }
+    }
+    hostNet = claim
+    netMode = 'host'
+    hostedCode = room.code
+    claiming = false
+    error.textContent = ''
+    send({ type: 'join', name: room.name, token: room.token })
+  } catch (err) {
+    claiming = false
+    if (netMode !== 'guest') return
+    if (guestRoom) return // already redialing or done
+    // One more patient redial: someone else may have claimed the room.
+    guestRoom = { ...room, redials: 39 }
+    dialGuest()
+  }
+}
+
+// This browser lost the room id to another host: stop the sim and rejoin
+// as a guest. Our own token survived in the migrated state, so our seat
+// is kept when we come back within the grace window.
+function yieldToGuest() {
+  if (netMode !== 'host' || !hostSession) return
+  const code = hostedCode
+  const name = localStorage.getItem('territory-name') || 'Player'
+  const token = sessionStorage.getItem('territory-token') || ''
+  try {
+    hostSession.yieldRoom()
+  } catch {
+    // ignore
+  }
+  try {
+    if (hostNet) hostNet.close()
+  } catch {
+    // ignore
+  }
+  hostNet = null
+  hostSession = null
+  hostedCode = ''
+  claiming = false
+  netMode = 'guest'
+  guestRoom = { code, name, token, redials: 8 }
+  guestQueue = []
+  error.textContent = 'Another host took over. Rejoining...'
+  dialGuest()
+}
+
 function dialGuest() {
   const room = guestRoom
-  if (!room || netMode !== 'guest') return
+  if (!room || netMode !== 'guest' || guestConn) return
+  lastTickAt = performance.now()
+  const epoch = ++dialEpoch
   guestConn = window.P2P.joinRoom(room.code, {
     onMessage,
-    onClose: () => {
-      guestConn = null
-      if (netMode !== 'guest' || guestRoom !== room) return
-      room.redials += 1
-      if (room.redials > 8) {
-        error.textContent = 'Lost the room. Check the code and join again.'
-        guestRoom = null
-        netMode = 'local'
-        lockOnlineButtons(false)
-        connect()
-        return
-      }
-      error.textContent = 'Connection lost. Rejoining...'
-      setTimeout(dialGuest, 1500)
-    },
+    onClose: () => handleGuestDrop(epoch),
   })
   guestConn.ready.then(() => {
     if (netMode !== 'guest' || guestRoom !== room) return
     room.redials = 0
+    lastTickAt = performance.now()
     error.textContent = ''
     for (const obj of guestQueue) guestConn.send(obj)
     guestQueue = []
@@ -332,17 +487,73 @@ function dialGuest() {
     send({ type: 'join', name: room.name, token: room.token })
   }).catch((err) => {
     if (netMode !== 'guest' || guestRoom !== room) return
-    error.textContent = err?.message || 'Could not join the room.'
-    guestConn = null
-    guestRoom = null
-    netMode = 'local'
-    lockOnlineButtons(false)
-    connect()
+    if (room.redials === 0) {
+      // First dial failed outright (usually a wrong code): say so now.
+      giveUpGuest(room, err?.message || 'Could not join the room.')
+      return
+    }
+    room.redials += 1
+    guestStep(room)
   })
 }
 
+// Transport close events can take a minute to notice a dead peer, so
+// guests also watch for starvation: ticks flow at 9Hz in play and pings
+// every 2s in lobby. Three silent seconds means the host is gone.
+setInterval(() => {
+  if (document.hidden) return
+  if (netMode !== 'guest' || !guestConn || claiming) return
+  if (performance.now() - lastTickAt <= 3000) return
+  if (guestRoom) guestRoom.redials = Math.max(guestRoom.redials, 7)
+  const conn = guestConn
+  try {
+    conn.close()
+  } catch {
+    // ignore
+  }
+  handleGuestDrop(dialEpoch)
+}, 1000)
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return
+  if (netMode !== 'guest' || !guestConn || claiming) return
+  if (performance.now() - lastTickAt > 3000) {
+    if (guestRoom) guestRoom.redials = Math.max(guestRoom.redials, 7)
+    handleGuestDrop(dialEpoch)
+  }
+})
+
 function onMessage(msg) {
   if (!msg || typeof msg !== 'object') return
+  if (netMode === 'guest') lastTickAt = performance.now()
+  if (msg.type === 'ping') return
+  if (msg.type === 'moved') {
+    // The old host yielded to a new one: skip the blip budget and go
+    // straight to patient redial / takeover.
+    if (netMode === 'guest' && guestRoom) {
+      guestRoom.redials = Math.max(guestRoom.redials, 8)
+      error.textContent = 'Host moved. Rejoining...'
+      if (guestConn) {
+        // Closing triggers onClose, which runs the drop handler once. If
+        // the dead connection never reports back, nudge it below.
+        const conn = guestConn
+        try {
+          conn.close()
+        } catch {
+          // ignore
+        }
+        const epoch = dialEpoch
+        setTimeout(() => handleGuestDrop(epoch), 2500)
+      } else {
+        handleGuestDrop(dialEpoch)
+      }
+    }
+    return
+  }
+  if (msg.type === 'migrate') {
+    if (msg.state?.game?.landB64 && msg.state?.game?.trailB64) lastMigrate = msg
+    return
+  }
   if (msg.type === 'hello') {
     myId = msg.playerId
     hostId = msg.hostId
@@ -364,8 +575,12 @@ function onMessage(msg) {
     return
   }
   if (msg.hostId != null) hostId = msg.hostId
+  if (msg.hostId != null) lastHostId = msg.hostId
   if (msg.wins) sessionWins = msg.wins
   if (msg.tickMs) tickMs = msg.tickMs
+  // Freshest roster for the takeover election.
+  if (Array.isArray(msg.players) && msg.players.length) lastPlayers = msg.players
+  else if (msg.type === 'lobby' && Array.isArray(msg.roster) && msg.roster.length) lastPlayers = msg.roster
 
   if (msg.type === 'lobby') {
     if ((phase === 'countdown' || phase === 'play') && msg.phase !== 'lobby') return

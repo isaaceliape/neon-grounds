@@ -102,48 +102,31 @@ globalThis.P2P = (() => {
     }
   }
 
-  // Host side: accepts guests, keyed by peer id. Resolves once the room is
-  // registered with the signaling server and the code is joinable.
-  function hostRoom({ code = makeCode(), onMessage, onLeave, onError } = {}) {
-    const missing = peerError()
-    if (missing) return { ready: Promise.reject(new Error(missing)), sendTo() {}, broadcast() {}, close() {}, code }
-    const peer = new window.Peer(peerIdFor(code), { debug: 0 })
+  // Shared guest book for anything serving a room id: accepts DataChannel
+  // guests keyed by peer id and fans messages out, chunked.
+  function serveGuests(getClosed, onMessage, onLeave) {
     const guests = new Map() // peer id -> connection
-    let closed = false
-
-    const ready = new Promise((resolve, reject) => {
-      peer.on('open', () => resolve(code))
-      peer.on('error', (error) => {
-        if (error?.type === 'unavailable-id') {
-          reject(new Error(`Room code ${code} is taken. Try hosting again for a new code.`))
-        } else if (!peer.open && !peer.destroyed) {
-          reject(new Error('Could not reach the signaling server. Check your connection.'))
-        } else if (onError) {
-          onError(error)
-        }
+    const attach = (peer) => {
+      peer.on('connection', (conn) => {
+        const key = conn.peer
+        guests.set(key, conn)
+        const receive = createReceiver((msg) => {
+          if (!getClosed() && onMessage) onMessage(key, msg)
+        })
+        conn.on('data', (wire) => receive(String(wire)))
+        conn.on('close', () => {
+          guests.delete(key)
+          if (!getClosed() && onLeave) onLeave(key)
+        })
+        conn.on('error', () => {
+          guests.delete(key)
+          if (!getClosed() && onLeave) onLeave(key)
+        })
       })
-    })
-
-    peer.on('connection', (conn) => {
-      const key = conn.peer
-      guests.set(key, conn)
-      const receive = createReceiver((msg) => {
-        if (!closed && onMessage) onMessage(key, msg)
-      })
-      conn.on('data', (wire) => receive(String(wire)))
-      conn.on('close', () => {
-        guests.delete(key)
-        if (!closed && onLeave) onLeave(key)
-      })
-      conn.on('error', () => {
-        guests.delete(key)
-        if (!closed && onLeave) onLeave(key)
-      })
-    })
-
+    }
     return {
-      code,
-      ready,
+      guests,
+      attach,
       sendTo(key, obj) {
         const conn = guests.get(key)
         if (conn) sendChunked(conn, obj)
@@ -159,8 +142,7 @@ globalThis.P2P = (() => {
           }
         }
       },
-      close() {
-        closed = true
+      closeGuests() {
         for (const conn of guests.values()) {
           try {
             conn.close()
@@ -169,11 +151,121 @@ globalThis.P2P = (() => {
           }
         }
         guests.clear()
+      },
+    }
+  }
+
+  // Host side: accepts guests, keyed by peer id. Resolves once the room is
+  // registered with the signaling server and the code is joinable.
+  // onIdLost fires if the id is taken after opening (lost a race with a
+  // new host); onCloudLost fires when the signaling socket drops.
+  function hostRoom({ code = makeCode(), onMessage, onLeave, onError, onIdLost, onCloudLost } = {}) {
+    const missing = peerError()
+    if (missing) return { ready: Promise.reject(new Error(missing)), sendTo() {}, broadcast() {}, close() {}, code }
+    const peer = new window.Peer(peerIdFor(code), { debug: 0 })
+    let closed = false
+    let opened = false
+    const book = serveGuests(() => closed, onMessage, onLeave)
+    book.attach(peer)
+
+    const ready = new Promise((resolve, reject) => {
+      peer.on('open', () => {
+        opened = true
+        resolve(code)
+      })
+      peer.on('disconnected', () => {
+        if (!closed && onCloudLost) onCloudLost()
+      })
+      peer.on('error', (error) => {
+        if (error?.type === 'unavailable-id') {
+          if (opened) {
+            if (!closed && onIdLost) onIdLost()
+          } else {
+            reject(new Error(`Room code ${code} is taken. Try hosting again for a new code.`))
+          }
+        } else if (!peer.open && !peer.destroyed) {
+          reject(new Error('Could not reach the signaling server. Check your connection.'))
+        } else if (onError) {
+          onError(error)
+        }
+      })
+    })
+
+    return {
+      code,
+      ready,
+      sendTo: (...args) => book.sendTo(...args),
+      broadcast: (...args) => book.broadcast(...args),
+      close() {
+        closed = true
+        book.closeGuests()
         try {
           peer.destroy()
         } catch {
           // ignore
         }
+      },
+    }
+  }
+
+  // Take over a room id whose host went away: retries until the signaling
+  // server frees the id, then serves like hostRoom. 'unavailable-id' while
+  // retrying just means the old host (or a rival) still holds it.
+  function claimRoom({ code, tries = 20, delayMs = 1000, onMessage, onLeave, onError, onIdLost, onCloudLost } = {}) {
+    const missing = peerError() || (!normalizeCode(code) ? 'Type the room code the host gave you.' : null)
+    if (missing) return { ready: Promise.reject(new Error(missing)), sendTo() {}, broadcast() {}, close() {}, code }
+    let closed = false
+    let peer = null
+    const book = serveGuests(() => closed, onMessage, onLeave)
+    const destroyPeer = () => {
+      if (peer) {
+        try {
+          peer.destroy()
+        } catch {
+          // ignore
+        }
+        peer = null
+      }
+    }
+    const ready = (async () => {
+      for (let attempt = 0; attempt < tries; attempt += 1) {
+        if (closed) throw new Error('Stopped.')
+        const taken = await new Promise((resolve) => {
+          peer = new window.Peer(peerIdFor(code), { debug: 0 })
+          book.attach(peer)
+          peer.on('open', () => resolve(false))
+          peer.on('error', (error) => {
+            if (error?.type === 'unavailable-id') resolve(true)
+            else if (onError) onError(error)
+          })
+        })
+        if (!taken) {
+          peer.on('disconnected', () => {
+            if (!closed && onCloudLost) onCloudLost()
+          })
+          peer.on('error', (error) => {
+            if (error?.type === 'unavailable-id') {
+              if (!closed && onIdLost) onIdLost()
+            } else if (onError) {
+              onError(error)
+            }
+          })
+          return code
+        }
+        destroyPeer()
+        await new Promise((done) => setTimeout(done, delayMs))
+      }
+      throw new Error('The room id never freed up. The old host may still be there.')
+    })()
+    return {
+      code,
+      ready,
+      sendTo: (...args) => book.sendTo(...args),
+      broadcast: (...args) => book.broadcast(...args),
+      close() {
+        closed = true
+        book.closeGuests()
+        destroyPeer()
       },
     }
   }
@@ -241,5 +333,5 @@ globalThis.P2P = (() => {
     }
   }
 
-  return { makeCode, normalizeCode, peerIdFor, peerError, chunkMessage, createReceiver, hostRoom, joinRoom }
+  return { makeCode, normalizeCode, peerIdFor, peerError, chunkMessage, createReceiver, hostRoom, claimRoom, joinRoom }
 })()

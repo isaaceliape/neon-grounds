@@ -854,6 +854,107 @@ export function createGame(options = {}) {
     return pack({ resync: phase === 'play' && tickCount % 20 === 0 })
   }
 
+  // Full sim snapshot for host migration: another browser can take over
+  // the room from this state with no shared memory. Plain data only
+  // (arrays, no Uint8Array) so it survives JSON over a DataChannel.
+  // Game time pauses while nobody ticks, so msLeft stays valid.
+  function exportState() {
+    return {
+      v: 1,
+      w,
+      h,
+      phase,
+      durationMs,
+      msLeft: phase === 'countdown'
+        ? countdownRemaining
+        : phase === 'play'
+          ? Math.max(0, endsAt - nowMs)
+          : 0,
+      countdownRemaining,
+      tickCount,
+      land: Array.from(land),
+      trail: Array.from(trail),
+      players: [...players.values()].map((player) => ({
+        id: player.id,
+        name: player.name,
+        color: player.color,
+        x: player.x,
+        y: player.y,
+        heading: player.heading,
+        turn: player.turn,
+        aim: player.aim,
+        dir: player.dir,
+        queued: player.queued,
+        alive: player.alive,
+        bot: player.bot,
+        level: player.level ?? null,
+        connected: player.connected,
+        inRound: player.inRound,
+        onOwn: player.onOwn,
+        kills: player.kills,
+        trailCells: [...player.trailCells],
+        out: player.out ? { ...player.out } : null,
+        botTurn: player.botTurn ?? null,
+        restUntil: player.restUntil ?? null,
+      })),
+    }
+  }
+
+  // Restore a snapshot from exportState. The previous host is marked
+  // disconnected (downId) and hosting passes to hostId explicitly, so the
+  // outcome does not depend on Map insertion order. Returns false when the
+  // snapshot is for a different board or build.
+  function importState(state, { downId = null, hostId: nextHost = null } = {}) {
+    if (!state || state.v !== 1 || state.w !== w || state.h !== h) return false
+    if (state.phase !== 'lobby' && state.phase !== 'countdown' && state.phase !== 'play' && state.phase !== 'over') return false
+    phase = state.phase
+    durationMs = state.durationMs ?? durationMs
+    countdownRemaining = state.countdownRemaining ?? 0
+    tickCount = state.tickCount ?? 0
+    endsAt = state.phase === 'play' ? Date.now() + Math.max(0, state.msLeft ?? 0) : 0
+    land.set(state.land)
+    trail.set(state.trail)
+    players.clear()
+    for (const saved of state.players ?? []) {
+      players.set(saved.id, {
+        id: saved.id,
+        name: saved.name,
+        color: saved.color,
+        x: saved.x,
+        y: saved.y,
+        heading: saved.heading,
+        turn: saved.turn,
+        aim: saved.aim,
+        dir: saved.dir,
+        queued: saved.queued,
+        alive: saved.alive,
+        bot: saved.bot,
+        level: saved.level ?? undefined,
+        connected: saved.connected,
+        inRound: saved.inRound,
+        onOwn: saved.onOwn,
+        landCount: 0,
+        kills: saved.kills,
+        trailCells: [...(saved.trailCells ?? [])],
+        out: saved.out ? { ...saved.out } : null,
+        botTurn: saved.botTurn ?? undefined,
+        restUntil: saved.restUntil ?? undefined,
+      })
+    }
+    for (let i = 0; i < land.length; i += 1) {
+      const owner = players.get(land[i])
+      if (owner) owner.landCount += 1
+    }
+    if (downId != null) {
+      const down = players.get(downId)
+      if (down) down.connected = false
+    }
+    if (nextHost != null && players.get(nextHost)?.connected) hostId = nextHost
+    else electHost()
+    clearPatch()
+    return true
+  }
+
   return {
     w,
     h,
@@ -885,6 +986,8 @@ export function createGame(options = {}) {
     pack,
     scores,
     resultLog,
+    exportState,
+    importState,
     player(id) {
       return players.get(id) ?? null
     },

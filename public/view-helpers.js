@@ -74,6 +74,20 @@ globalThis.viewHelpers = (() => {
     return dx * dx + dy * dy < range * range
   }
 
+  // Who takes over when the host's browser goes away. Lowest connected
+  // human id wins, so every guest computes the same successor from the
+  // same player list with no extra messages. The old host is excluded;
+  // when it is missing (local server) pass null to include everyone.
+  function electSuccessor(list, hostId) {
+    let best = null
+    for (const player of list ?? []) {
+      if (!player || player.bot || player.connected === false) continue
+      if (hostId != null && player.id === hostId) continue
+      if (best == null || player.id < best) best = player.id
+    }
+    return best
+  }
+
   // Shareable invite link: opening it lands the guest on the join screen
   // with the room code already filled in.
   function roomInviteLink(base, code) {
@@ -119,6 +133,7 @@ globalThis.viewHelpers = (() => {
     botLabel,
     winsLabel,
     roomInviteLink,
+    electSuccessor,
     isEnded, listedPlayers, peopleForNick, winnerText,
     wallWarnings, deathFeedText, captureFeedText, isDangerCell,
   }

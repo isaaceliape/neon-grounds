@@ -21,7 +21,7 @@ Stop the server with Ctrl+C in that terminal. Closing a browser does not stop th
 
 Opening the page shows two choices: **Host a session** or **Join a session**. The host types their name and gets a 5-letter room code plus a one-tap invite link (`?code=` URL that fills the code in for guests). Everyone else opens the page or the link anywhere on the internet, types their name and the code, and joins. The same 12 seats and 3 bots apply.
 
-The host's browser runs the round, peer to peer over WebRTC. The host must keep the page open: if the host's tab closes, the room ends for everyone. Losing the connection briefly is fine; guests rejoin automatically for about 10 seconds, same as a dropped tab on the local server.
+The host's browser runs the round, peer to peer over WebRTC. If the host's tab closes mid-round, the room carries on: the lowest-id remaining player automatically takes over under the same room code (the host streams takeover snapshots every few seconds), and everyone else rejoins with their seats kept. The host must keep the page open only in the sense that *someone's* page must stay open; losing the connection briefly is fine, and guests rejoin automatically for about 10 seconds, same as a dropped tab on the local server.
 
 Online rooms need internet access to reach the free PeerJS signaling server that introduces the players. After that introduction, game traffic flows directly between browsers. Win counts last for the tab session, and rounds are not written to `logs/results.log` (there is no server to write it).
 

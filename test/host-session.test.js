@@ -110,3 +110,41 @@ test('a dropped guest keeps their seat briefly and can rejoin with the token', a
     session.close()
   }
 })
+
+test('takeover: migrate snapshots restore a room and keep seats', async () => {
+  const { createHostSession } = await import('../public/host-session.js')
+  const first = makeRoom()
+  try {
+    first.session.guestMessage(LOCAL_KEY, { type: 'join', name: 'Host', token: '' })
+    first.session.guestMessage('guest-1', { type: 'join', name: 'Guest', token: '' })
+    const hostHello = lastOf(first.toLocal, 'hello')
+    const guestHello = lastOf(first.toGuests.get('guest-1'), 'hello')
+    first.session.guestMessage(LOCAL_KEY, { type: 'start', minutes: 1 })
+    const migrate = await waitFor(() => lastOf(first.broadcasts, 'migrate'), 8000)
+    assert.ok(migrate?.state?.game?.landB64, 'host streams takeover state')
+    assert.equal(migrate?.state?.tokens?.[guestHello.token], guestHello.playerId, 'tokens travel with the state')
+
+    // The host is gone. The guest takes over under the same code.
+    const local = []
+    const taken = createHostSession({
+      gameOptions: { w: 40, h: 30, tickMs: 5, countdownMs: 20 },
+      roomCode: 'ABCDE',
+      initial: { ...migrate.state, hostId: guestHello.playerId, downId: hostHello.playerId },
+      onDeliver: (key, obj) => local.push(obj),
+      onBroadcast: (obj) => local.push(obj),
+    })
+    try {
+      assert.equal(taken.game.hostId, guestHello.playerId, 'successor hosts')
+      assert.equal(taken.game.player(hostHello.playerId).connected, false, 'old host marked down')
+      taken.guestMessage(LOCAL_KEY, { type: 'join', name: 'Guest', token: guestHello.token })
+      const hello = lastOf(local, 'hello')
+      assert.equal(hello?.playerId, guestHello.playerId, 'successor keeps its own seat')
+      const state = lastOf(local, 'full') ?? lastOf(local, 'lobby')
+      assert.ok(state, 'new host serves state to rejoined players')
+    } finally {
+      taken.close()
+    }
+  } finally {
+    first.session.close()
+  }
+})

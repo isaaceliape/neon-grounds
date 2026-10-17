@@ -149,3 +149,18 @@ test('invite links carry the room code for the join screen', () => {
     'http://localhost:4174/?code=ABCDE',
   )
 })
+
+test('takeover election picks the lowest connected human, never the host', () => {
+  const { electSuccessor } = loadHelpers()
+  const humans = [
+    { id: 1, bot: false, connected: true },
+    { id: 2, bot: false, connected: true },
+    { id: 3, bot: true, connected: true },
+  ]
+  assert.equal(electSuccessor(humans, 1), 2, 'skips the dead host')
+  assert.equal(electSuccessor(humans, null), 1, 'no host to skip on a local server')
+  assert.equal(electSuccessor([...humans, { id: 0, bot: false, connected: false }], 1), 2, 'skips the disconnected')
+  assert.equal(electSuccessor([{ id: 1, bot: true, connected: true }], 1), null, 'bots never take over')
+  assert.equal(electSuccessor([], 1), null, 'empty room, nobody to elect')
+  assert.equal(electSuccessor(null, 1), null, 'missing list')
+})
