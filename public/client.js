@@ -34,13 +34,42 @@ const copyCodeBtn = document.querySelector('#copy-code')
 const copyLinkBtn = document.querySelector('#copy-link')
 const queryParams = new URLSearchParams(location.search)
 const LOCAL_DEV = queryParams.has('local')
-// Hidden frame-time probe (?fps=1): a tiny overlay reporting real-device
-// numbers, so animation hitches can be diagnosed off-lab.
-const FPS_PROBE = queryParams.has('fps')
+// Frame-time probe: ?fps=1 forces it on, otherwise the menu's Show FPS
+// checkbox controls it. The choice is saved in this browser.
+const fpsBox = document.querySelector('#show-fps')
+let fpsOn = queryParams.has('fps')
 let fpsEl = null
 let fpsAcc = 0
 let fpsCount = 0
 let fpsAt = 0
+
+function setFps(on) {
+  fpsOn = Boolean(on)
+  fpsBox.checked = fpsOn
+  try {
+    localStorage.setItem('territory-fps', fpsOn ? '1' : '0')
+  } catch {
+    // storage can be unavailable; the setting then lasts until reload
+  }
+  if (!fpsOn && fpsEl) {
+    fpsEl.remove()
+    fpsEl = null
+    fpsAcc = 0
+    fpsCount = 0
+  }
+}
+
+if (!fpsOn) {
+  try {
+    fpsOn = localStorage.getItem('territory-fps') === '1'
+  } catch {
+    fpsOn = false
+  }
+}
+fpsBox.checked = fpsOn
+fpsBox.addEventListener('change', () => {
+  setFps(fpsBox.checked)
+})
 const roomCodeEl = document.querySelector('#room-code')
 const startBtn = document.querySelector('#start')
 const addBotBtn = document.querySelector('#add-bot')
@@ -1125,7 +1154,7 @@ function frame() {
   const frameAt = performance.now()
   const dt = Math.min(0.05, (frameAt - lastFrameAt) / 1000)
   lastFrameAt = frameAt
-  if (FPS_PROBE) {
+  if (fpsOn) {
     if (!fpsEl) {
       fpsEl = document.createElement('div')
       fpsEl.id = 'fps'
