@@ -45,22 +45,22 @@
     #bg-blobs { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
     #bg-blobs i { position: absolute; border-radius: 50%; filter: blur(70px); }
     #bg-blobs .b1 { width: 60vmax; height: 60vmax; left: -18vmax; top: -15vmax; opacity: 0.35;
-      background: radial-gradient(circle, var(--n1), transparent 65%); animation: morph1 17s ease-in-out infinite alternate; }
+      background: radial-gradient(circle, var(--n1), transparent 65%); animation: morph1 9s ease-in-out infinite alternate; }
     #bg-blobs .b2 { width: 48vmax; height: 48vmax; right: -14vmax; top: 22vh; opacity: 0.28;
-      background: radial-gradient(circle, var(--n4), transparent 65%); animation: morph2 21s ease-in-out infinite alternate; }
+      background: radial-gradient(circle, var(--n4), transparent 65%); animation: morph2 12s ease-in-out infinite alternate; }
     #bg-blobs .b3 { width: 42vmax; height: 42vmax; left: 12vw; bottom: -16vmax; opacity: 0.24;
-      background: radial-gradient(circle, var(--n2), transparent 65%); animation: morph3 14s ease-in-out infinite alternate; }
+      background: radial-gradient(circle, var(--n2), transparent 65%); animation: morph3 8s ease-in-out infinite alternate; }
     @keyframes morph1 {
-      from { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 50%; }
-      to { transform: translate(9vmax, 7vmax) scale(1.25) rotate(40deg); border-radius: 42% 58% 55% 45%; }
+      from { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 50%; opacity: 0.3; }
+      to { transform: translate(14vmax, 10vmax) scale(1.4) rotate(70deg); border-radius: 42% 58% 55% 45%; opacity: 0.45; }
     }
     @keyframes morph2 {
-      from { transform: translate(0, 0) scale(1.15) rotate(0deg); border-radius: 55% 45% 50% 50%; }
-      to { transform: translate(-8vmax, -6vmax) scale(0.9) rotate(-35deg); border-radius: 50%; }
+      from { transform: translate(0, 0) scale(1.2) rotate(0deg); border-radius: 55% 45% 50% 50%; opacity: 0.24; }
+      to { transform: translate(-12vmax, -9vmax) scale(0.85) rotate(-60deg); border-radius: 50%; opacity: 0.38; }
     }
     @keyframes morph3 {
-      from { transform: translate(0, 0) scale(0.95); border-radius: 50% 50% 45% 55%; }
-      to { transform: translate(7vmax, -8vmax) scale(1.2); border-radius: 50%; }
+      from { transform: translate(0, 0) scale(0.9); border-radius: 50% 50% 45% 55%; opacity: 0.2; }
+      to { transform: translate(10vmax, -11vmax) scale(1.35); border-radius: 50%; opacity: 0.36; }
     }
     .reveal { opacity: 0; translate: 0 20px; transition: opacity 0.6s ease, translate 0.6s ease; }
     .reveal.in { opacity: 1; translate: 0 0; }
