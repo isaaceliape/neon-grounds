@@ -27,7 +27,20 @@ globalThis.sfx = (() => {
     ctx = new Ctor()
     master = ctx.createGain()
     master.gain.value = muted ? 0 : VOLUME
-    master.connect(ctx.destination)
+    // A gentle limiter so a death burst landing on a kick and a capture
+    // run never clips: everything is glued instead of distorting.
+    if (typeof ctx.createDynamicsCompressor === 'function') {
+      const comp = ctx.createDynamicsCompressor()
+      comp.threshold.value = -18
+      comp.knee.value = 12
+      comp.ratio.value = 5
+      comp.attack.value = 0.004
+      comp.release.value = 0.18
+      master.connect(comp)
+      comp.connect(ctx.destination)
+    } else {
+      master.connect(ctx.destination)
+    }
     // The background theme gets its own bus so it can sit quietly under
     // the effects. Muting the master silences it too.
     music = ctx.createGain()
@@ -71,6 +84,18 @@ globalThis.sfx = (() => {
 
   function isMusicMuted() {
     return musicMuted
+  }
+
+  // Dips the theme for a beat when an effect lands, then lets it back up.
+  // Ducking (instead of just mixing louder) keeps effects intelligible
+  // without turning the music into wallpaper you have to mute.
+  function duckMusic(amount = 0.5, hold = 0.25) {
+    if (!ctx || !music || muted || musicMuted) return
+    if (typeof music.gain.setTargetAtTime !== 'function') return
+    const t = ctx.currentTime
+    music.gain.cancelScheduledValues(t)
+    music.gain.setTargetAtTime(MUSIC_VOLUME * amount, t, 0.02)
+    music.gain.setTargetAtTime(MUSIC_VOLUME, t + hold, 0.15)
   }
 
   // One enveloped oscillator note.
@@ -122,6 +147,7 @@ globalThis.sfx = (() => {
     for (let i = 0; i < notes; i += 1) {
       tone(base * ratios[i], 0.16, { type: 'triangle', gain: 0.45 * loudness, delay: i * 0.065 })
     }
+    duckMusic(0.6, 0.2)
   }
 
   // loudness is 0 to 1: your own death is 1, a distant one is quiet.
@@ -129,6 +155,7 @@ globalThis.sfx = (() => {
     const level = Math.min(1, Math.max(0.2, loudness))
     noise(0.4, { gain: 0.6 * level })
     tone(220, 0.35, { type: 'sawtooth', gain: 0.35 * level, slideTo: 45 })
+    duckMusic(0.35, 0.35)
   }
 
   function tick() {
@@ -140,18 +167,21 @@ globalThis.sfx = (() => {
     tone(659, 0.4, { type: 'sawtooth', gain: 0.22 })
     tone(784, 0.4, { type: 'sawtooth', gain: 0.22 })
     tone(1047, 0.5, { type: 'triangle', gain: 0.3, delay: 0.08 })
+    duckMusic(0.5, 0.3)
   }
 
   function win() {
     ;[523, 659, 784, 1047, 1319].forEach((f, i) => {
       tone(f, 0.28, { type: 'triangle', gain: 0.4, delay: i * 0.09 })
     })
+    duckMusic(0.5, 0.4)
   }
 
   function lose() {
     ;[392, 349, 311, 262].forEach((f, i) => {
       tone(f, 0.3, { type: 'triangle', gain: 0.35, delay: i * 0.14 })
     })
+    duckMusic(0.5, 0.4)
   }
 
   for (const type of ['pointerdown', 'keydown', 'click']) {
@@ -216,7 +246,7 @@ globalThis.sfx = (() => {
   function getNoiseBuffer() {
     if (noiseBuffer || !ctx || typeof ctx.createBuffer !== 'function') return noiseBuffer
     const frames = Math.max(1, Math.floor(ctx.sampleRate * 0.25))
-    noiseBuffer = ctx.createBuffer(1, frames)
+    noiseBuffer = ctx.createBuffer(1, frames, ctx.sampleRate)
     const data = noiseBuffer.getChannelData(0)
     for (let i = 0; i < frames; i += 1) data[i] = Math.random() * 2 - 1
     return noiseBuffer
@@ -256,8 +286,8 @@ globalThis.sfx = (() => {
     const bass = MUSIC_BASS[i]
     if (bass) musicTone(bass, when, 0.24, { type: 'triangle', gain: 0.2 })
     const beat = i % 8
-    if (beat === 0 || beat === 4) musicTone(150, when, 0.12, { type: 'sine', gain: 0.3, slideTo: 45 })
-    if (beat === 2 || beat === 6) musicNoise(when, 0.09, { gain: 0.11, freq: 1800 })
+    if (beat === 0 || beat === 4) musicTone(150, when, 0.12, { type: 'sine', gain: 0.22, slideTo: 45 })
+    if (beat === 2 || beat === 6) musicNoise(when, 0.09, { gain: 0.09, freq: 1800 })
     if (beat === 0) {
       for (const freq of chord) musicTone(freq, when, MUSIC_STEP * 8, { type: 'sine', gain: 0.03 })
     }

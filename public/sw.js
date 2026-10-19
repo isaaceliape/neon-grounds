@@ -2,7 +2,7 @@
 // or WebRTC room), but the page, art, and code load from cache after the
 // first visit, which is also what makes the app installable.
 // Bump CACHE on release so updates replace the old shell.
-const CACHE = 'territory-v1'
+const CACHE = 'territory-v2'
 const SHELL = [
   './',
   'index.html',

@@ -7,14 +7,21 @@ const source = readFileSync(new URL('../public/sfx.js', import.meta.url), 'utf8'
 
 // Minimal stand-ins for the Web Audio API that count what the code does.
 function makeEnv({ stored = null, musicStored = null, withAudio = true } = {}) {
-  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [] }
+  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [], gains: [] }
   const timers = []
   const cleared = []
   const entries = []
   if (stored != null) entries.push(['territory-mute', stored])
   if (musicStored != null) entries.push(['territory-music-mute', musicStored])
   const store = new Map(entries)
-  const param = () => ({ value: 1, setValueAtTime() {}, exponentialRampToValueAtTime() {} })
+  const param = () => ({
+    value: 1,
+    calls: [],
+    setValueAtTime() {},
+    exponentialRampToValueAtTime() {},
+    setTargetAtTime() { this.calls.push('target') },
+    cancelScheduledValues() { this.calls.push('cancel') },
+  })
   const node = () => ({ connect() {} })
 
   class FakeAudioContext {
@@ -34,6 +41,7 @@ function makeEnv({ stored = null, musicStored = null, withAudio = true } = {}) {
 
     createGain() {
       const gain = { ...node(), gain: param() }
+      stats.gains.push(gain)
       if (stats.masterGain === null) stats.masterGain = gain
       return gain
     }
@@ -52,6 +60,17 @@ function makeEnv({ stored = null, musicStored = null, withAudio = true } = {}) {
 
     createBiquadFilter() {
       return { ...node(), frequency: param(), type: 'lowpass' }
+    }
+
+    createDynamicsCompressor() {
+      return {
+        ...node(),
+        threshold: param(),
+        knee: param(),
+        ratio: param(),
+        attack: param(),
+        release: param(),
+      }
     }
   }
 
@@ -78,6 +97,17 @@ test('no audio context is created before the first user gesture', () => {
   sfx.tick()
   assert.equal(stats.contexts, 0)
   assert.equal(stats.oscillators, 0)
+})
+
+test('effects duck the music instead of fighting it', () => {
+  const { sfx, stats, listeners } = makeEnv()
+  listeners.pointerdown()
+  // gains[0] is the master bus, gains[1] the music bus.
+  const musicGain = stats.gains[1].gain
+  sfx.capture(0.5)
+  sfx.death(1)
+  assert.ok(musicGain.calls.includes('cancel'), 'previous automation is cleared')
+  assert.ok(musicGain.calls.filter((call) => call === 'target').length >= 4, 'music dips and releases')
 })
 
 test('the first click or key press creates one context and resumes it', () => {
