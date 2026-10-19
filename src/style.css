@@ -365,7 +365,7 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 #results li:nth-child(4) { animation-delay: 0.24s; }
 
 @keyframes row-in {
-  from { opacity: 0; transform: translateX(-14px); }
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: none; }
 }
 
@@ -483,10 +483,10 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-#feed li.fade { opacity: 0; transform: translateX(16px); }
+#feed li.fade { opacity: 0; transform: translateY(12px); }
 
 @keyframes feed-in {
-  from { opacity: 0; transform: translateX(24px); }
+  from { opacity: 0; transform: translateY(-14px); }
   to { opacity: 1; transform: none; }
 }
 
