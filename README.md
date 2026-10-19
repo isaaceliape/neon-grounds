@@ -4,6 +4,8 @@
 
 A local multiplayer game in the browser. Each player owns a patch of land, drives a snake, and takes more ground by closing a loop. Up to 12 players can share a room, and up to 3 of the seats can be bots. It works on phones too.
 
+It installs as an app: after the first visit, desktop browsers offer to install it, and phones can add it to the home screen. The page then loads from cache and opens full-screen like a native app.
+
 ## Run it
 
 From this folder:

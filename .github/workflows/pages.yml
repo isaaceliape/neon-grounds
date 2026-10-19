@@ -25,6 +25,7 @@ jobs:
         run: |
           mkdir -p dist
           cp public/client.js public/fx.js public/index.html public/host-session.js public/p2p.js public/peerjs.min.js public/sfx.js public/style.css public/view-helpers.js dist/
+          cp public/manifest.webmanifest public/sw.js public/icon.svg public/icon-192.png public/icon-512.png public/maskable-512.png public/apple-touch-icon.png dist/
           # host-session.js imports ./game.js; ship the single server copy next to it.
           cp server/game.js dist/game.js
       - name: Upload artifact

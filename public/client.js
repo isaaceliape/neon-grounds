@@ -113,6 +113,14 @@ const muteBtn = document.querySelector('#mute')
 const musicBtn = document.querySelector('#music')
 const fullBtn = document.querySelector('#full')
 const touchPad = document.querySelector('#touch')
+
+// Installable web app: the service worker caches the shell after the first
+// visit, so the page loads offline and browsers offer installation.
+if ('serviceWorker' in navigator) {
+  globalThis.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {})
+  })
+}
 const touchLeft = document.querySelector('#touch-left')
 const touchRight = document.querySelector('#touch-right')
 let lastFrameAt = performance.now()
