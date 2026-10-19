@@ -5,7 +5,7 @@ import { defineConfig } from 'vite'
 // the shell by name and every deploy re-versions the cache, so hashed
 // filenames would only churn the shell list for no gain.
 // base './' keeps asset URLs relative: Pages serves this game from the
-// /neon-groundss/ subpath, where absolute /index.js-style URLs 404.
+// /neon-grounds/ subpath, where absolute /index.js-style URLs 404.
 export default defineConfig({
   base: './',
   server: {
