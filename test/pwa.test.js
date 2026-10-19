@@ -46,3 +46,14 @@ test('the local server serves PWA file types', () => {
   assert.ok(server.includes('.webmanifest'), 'manifest MIME type mapped')
   assert.ok(server.includes('.png'), 'icon MIME type mapped')
 })
+
+test('every deploy busts the service-worker cache', () => {
+  const worker = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
+  assert.match(worker, /const CACHE = 'territory-v\d+'/, 'shell cache is versioned')
+  assert.ok(worker.includes('skipWaiting'), 'new worker activates immediately')
+  assert.ok(worker.includes('clients.claim'), 'new worker takes over open tabs')
+  assert.ok(worker.includes('caches.delete'), 'old shell caches are purged')
+  const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8')
+  assert.ok(workflow.includes('rev-parse --short HEAD'), 'deploy stamps the cache with the commit')
+  assert.ok(workflow.includes("const CACHE = 'territory-"), 'deploy rewrites the versioned cache name')
+})
