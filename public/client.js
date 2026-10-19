@@ -1516,10 +1516,20 @@ addBotBtn.addEventListener('click', () => {
   send({ type: 'bot', level: botLevel.value })
 })
 
-steer.checked = localStorage.getItem('territory-steer') === '1'
-steer.addEventListener('change', () => {
+// Steering mode follows the last input used: pressing a turn control
+// (touch buttons, arrow keys) drops back to buttons, ticking the menu
+// checkbox aims with the cursor. Without this, a persisted steer choice
+// silently swallowed every turn press, which is exactly how the touch
+// buttons "broke" on mobile.
+function setSteerMode(on) {
+  steer.checked = Boolean(on)
   localStorage.setItem('territory-steer', steer.checked ? '1' : '0')
   lastSteer = null
+}
+
+steer.checked = localStorage.getItem('territory-steer') === '1'
+steer.addEventListener('change', () => {
+  setSteerMode(steer.checked)
 })
 
 window.addEventListener('pointermove', (event) => {
@@ -1624,7 +1634,6 @@ function turnKey(key) {
 }
 
 function sendTurn() {
-  if (steer.checked) return
   send({ type: 'steer', turn: viewHelpers.turnFromHeld(heldTurn) })
 }
 
@@ -1634,6 +1643,7 @@ function bindTurnButton(button, side) {
   const active = () => myId && (phase === 'countdown' || phase === 'play')
   const press = (event) => {
     event.preventDefault()
+    if (steer.checked) setSteerMode(false)
     if (heldTurn[side]) return
     heldTurn[side] = true
     button.classList.add('down')
@@ -1660,6 +1670,7 @@ window.addEventListener('keydown', (event) => {
   if (!side) return
   event.preventDefault()
   if (event.repeat) return
+  if (steer.checked) setSteerMode(false)
   heldTurn[side] = true
   if (myId && (phase === 'countdown' || phase === 'play')) sendTurn()
 })
