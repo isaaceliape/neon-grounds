@@ -1,5 +1,7 @@
 # Territory
 
+**[Play now!](https://isaaceliape.github.io/territory/)**
+
 A local multiplayer game in the browser. Each player owns a patch of land, drives a snake, and takes more ground by closing a loop. Up to 12 players can share a room, and up to 3 of the seats can be bots. It works on phones too.
 
 ## Run it
