@@ -41,7 +41,35 @@
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
       line-height: 1.5;
     }
-    .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+    #bg-blobs { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    #bg-blobs i { position: absolute; border-radius: 50%; filter: blur(70px); }
+    #bg-blobs .b1 { width: 60vmax; height: 60vmax; left: -18vmax; top: -15vmax; opacity: 0.35;
+      background: radial-gradient(circle, var(--n1), transparent 65%); animation: morph1 17s ease-in-out infinite alternate; }
+    #bg-blobs .b2 { width: 48vmax; height: 48vmax; right: -14vmax; top: 22vh; opacity: 0.28;
+      background: radial-gradient(circle, var(--n4), transparent 65%); animation: morph2 21s ease-in-out infinite alternate; }
+    #bg-blobs .b3 { width: 42vmax; height: 42vmax; left: 12vw; bottom: -16vmax; opacity: 0.24;
+      background: radial-gradient(circle, var(--n2), transparent 65%); animation: morph3 14s ease-in-out infinite alternate; }
+    @keyframes morph1 {
+      from { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 50%; }
+      to { transform: translate(9vmax, 7vmax) scale(1.25) rotate(40deg); border-radius: 42% 58% 55% 45%; }
+    }
+    @keyframes morph2 {
+      from { transform: translate(0, 0) scale(1.15) rotate(0deg); border-radius: 55% 45% 50% 50%; }
+      to { transform: translate(-8vmax, -6vmax) scale(0.9) rotate(-35deg); border-radius: 50%; }
+    }
+    @keyframes morph3 {
+      from { transform: translate(0, 0) scale(0.95); border-radius: 50% 50% 45% 55%; }
+      to { transform: translate(7vmax, -8vmax) scale(1.2); border-radius: 50%; }
+    }
+    .reveal { opacity: 0; translate: 0 20px; transition: opacity 0.6s ease, translate 0.6s ease; }
+    .reveal.in { opacity: 1; translate: 0 0; }
+    .steps li:nth-child(2), .shots figure:nth-child(2) { transition-delay: 0.1s; }
+    .steps li:nth-child(3), .shots figure:nth-child(3) { transition-delay: 0.2s; }
+    @media (prefers-reduced-motion: reduce) {
+      #bg-blobs i { animation: none; }
+      .reveal { opacity: 1; translate: none; transition: none; }
+    }
     header.hero { text-align: center; padding: 72px 0 40px; }
     header.hero h1 {
       margin: 0;
@@ -114,6 +142,7 @@
   </style>
 </head>
 <body>
+  <div id="bg-blobs" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
   <div class="wrap">
     <header class="hero">
       <h1><span class="l1">N</span><span class="l2">e</span><span class="l3">o</span><span class="l4">n</span> <span class="grad">Grounds</span></h1>
@@ -130,7 +159,7 @@
       </div>
     </header>
 
-    <section>
+    <section class="reveal">
       <h2>With friends in 30 seconds</h2>
       <ol class="steps">
         <li><strong>1. Host</strong> One of you taps Host a session and gets a 5-letter room code.</li>
@@ -139,7 +168,7 @@
       </ol>
     </section>
 
-    <section>
+    <section class="reveal">
       <h2>Look at it go</h2>
       <div class="shots">
         <figure>
@@ -157,7 +186,7 @@
       </div>
     </section>
 
-    <section>
+    <section class="reveal">
       <h2>Why it sticks</h2>
       <ul class="fun">
         <li><strong>Greed vs. safety.</strong> A huge loop wins the round, and leaves a mile of line to cut.</li>
@@ -170,11 +199,27 @@
       </div>
     </section>
 
-    <footer>
+    <footer class="reveal">
       Neon Grounds runs peer-to-peer in your browser. Made for game night.
     </footer>
   </div>
+  <noscript><style>.reveal { opacity: 1; translate: none; }</style></noscript>
   <script>
+    // Reveal sections and cards as they scroll into view.
+    try {
+      const els = [...document.querySelectorAll('section.reveal, footer.reveal, .steps li, .shots figure, ul.fun li')]
+      els.forEach(el => el.classList.add('reveal'))
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(entries => {
+          entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } })
+        }, { threshold: 0.12 })
+        els.forEach(el => io.observe(el))
+      } else {
+        els.forEach(el => el.classList.add('in'))
+      }
+    } catch {
+      // Static content stays readable without animation.
+    }
     // Invite links from before the /play/ move land here: forward the code.
     try {
       const code = new URLSearchParams(location.search).get('code')
