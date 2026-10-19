@@ -187,8 +187,7 @@ h1 {
   font-weight: 700;
   letter-spacing: 0.04em;
 }
-h1 .l1, h1 .l2, h1 .l3, h1 .l4, h1 .grad {
-  color: #fff;
+h1 .l1, h1 .l2, h1 .l3, h1 .l4 {
   text-shadow:
     0 0 7px #fff,
     0 0 10px #fff,
@@ -199,14 +198,17 @@ h1 .l1, h1 .l2, h1 .l3, h1 .l4, h1 .grad {
     0 0 102px var(--glow),
     0 0 151px var(--glow);
 }
-h1 .l1 { --glow: var(--n1); }
-h1 .l2 { --glow: var(--glow); }
-h1 .l3 { --glow: var(--n3); animation: neon-flicker 4s infinite; }
-h1 .l4 { --glow: var(--n4); }
+h1 .l1 { color: var(--n1); --glow: var(--n1); }
+h1 .l2 { color: var(--glow); --glow: var(--glow); }
+h1 .l3 { color: var(--n3); --glow: var(--n3); animation: neon-flicker 4s infinite; }
+h1 .l4 { color: var(--n4); --glow: var(--n4); }
 h1 .grad {
-  --glow: var(--n1);
-  background: none;
-  -webkit-text-fill-color: #fff;
+  background: linear-gradient(100deg, var(--n1), var(--n4) 45%, var(--glow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.65)) drop-shadow(0 0 34px rgba(255, 79, 216, 0.75)) drop-shadow(0 0 80px rgba(160, 107, 255, 0.55));
 }
 @keyframes neon-flicker {
   0%, 18%, 22%, 25%, 53%, 57%, 100% {
