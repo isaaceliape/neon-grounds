@@ -1140,8 +1140,8 @@ function formatClock(ms) {
 function statusText() {
   const me = myId ? bodies.get(myId) : null
   if (me && !me.alive && (phase === 'play' || phase === 'countdown')) {
-    if (!me.out) return 'Watcher'
-    return `Watcher. ${reasonText(me)}`
+    if (!me.out) return 'Watching'
+    return reasonText(me)
   }
   if (!myId && (phase === 'play' || phase === 'countdown')) return 'Watching'
   return ''

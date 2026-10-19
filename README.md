@@ -110,7 +110,7 @@ Driving across filled land is not a cut. A line painted on top of your land does
 
 When you die, the unfinished line disappears. Land you already took stays your color. Other players can still take it by closing a loop around it.
 
-You then watch as Watcher. The camera shows the whole map. The timer and scoreboard stay. The status line says Watcher and why you went out. You do not steer anymore.
+You then spectate. The camera shows the whole map. The timer and scoreboard stay. The status line says why you went out. You do not steer anymore.
 
 ## How a round ends
 
