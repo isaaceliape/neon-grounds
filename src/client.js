@@ -66,7 +66,7 @@ function setFps(on) {
   fpsOn = Boolean(on)
   fpsBox.checked = fpsOn
   try {
-    localStorage.setItem('territory-fps', fpsOn ? '1' : '0')
+    localStorage.setItem('neon-ground-fps', fpsOn ? '1' : '0')
   } catch {
     // storage can be unavailable; the setting then lasts until reload
   }
@@ -80,7 +80,7 @@ function setFps(on) {
 
 if (!fpsOn) {
   try {
-    fpsOn = localStorage.getItem('territory-fps') === '1'
+    fpsOn = localStorage.getItem('neon-ground-fps') === '1'
   } catch {
     fpsOn = false
   }
@@ -96,7 +96,7 @@ fpsBox.addEventListener('change', () => {
 const miniBox = document.querySelector('#hide-mini')
 let miniHiddenPref = false
 try {
-  miniHiddenPref = localStorage.getItem('territory-hide-mini') === '1'
+  miniHiddenPref = localStorage.getItem('neon-ground-hide-mini') === '1'
 } catch {
   miniHiddenPref = false
 }
@@ -110,7 +110,7 @@ function setMiniHidden(hidden) {
   miniHiddenPref = Boolean(hidden)
   miniBox.checked = miniHiddenPref
   try {
-    localStorage.setItem('territory-hide-mini', miniHiddenPref ? '1' : '0')
+    localStorage.setItem('neon-ground-hide-mini', miniHiddenPref ? '1' : '0')
   } catch {
     // storage can be unavailable; the setting then lasts until reload
   }
@@ -239,7 +239,7 @@ let lastHostId = null
 let lastTickAt = 0
 const trailColors = new Map()
 
-const savedName = localStorage.getItem('territory-name') || ''
+const savedName = localStorage.getItem('neon-ground-name') || ''
 hostNameInput.value = savedName
 guestNameInput.value = savedName
 nameInput.value = savedName
@@ -269,7 +269,7 @@ function connect() {
     error.textContent = ''
     for (const data of sendQueue) socket.send(data)
     sendQueue = []
-    const token = sessionStorage.getItem('territory-token')
+    const token = sessionStorage.getItem('neon-ground-token')
     if (token) send({ type: 'join', name: nameInput.value, token })
   })
   socket.addEventListener('message', (event) => {
@@ -354,7 +354,7 @@ async function hostOnlineRoom() {
     hostedCode = await hostNet.ready
     netMode = 'host'
     stopLocalSocket()
-    localStorage.setItem('territory-name', name)
+    localStorage.setItem('neon-ground-name', name)
     sfx.startMusic()
     send({ type: 'join', name, token: '' })
   } catch (err) {
@@ -405,8 +405,8 @@ function joinOnlineRoom() {
   lockOnlineButtons(true)
   netMode = 'guest'
   stopLocalSocket()
-  guestRoom = { code, name, token: sessionStorage.getItem(`territory-token-${code}`) || '', redials: 0 }
-  localStorage.setItem('territory-name', name)
+  guestRoom = { code, name, token: sessionStorage.getItem(`neon-ground-token-${code}`) || '', redials: 0 }
+  localStorage.setItem('neon-ground-name', name)
   sfx.startMusic()
   dialGuest()
 }
@@ -544,8 +544,8 @@ async function attemptTakeover(room) {
 function yieldToGuest() {
   if (netMode !== 'host' || !hostSession) return
   const code = hostedCode
-  const name = localStorage.getItem('territory-name') || 'Player'
-  const token = sessionStorage.getItem('territory-token') || ''
+  const name = localStorage.getItem('neon-ground-name') || 'Player'
+  const token = sessionStorage.getItem('neon-ground-token') || ''
   try {
     hostSession.yieldRoom()
   } catch {
@@ -662,9 +662,9 @@ function onMessage(msg) {
     if (msg.token) {
       if (netMode === 'guest' && guestRoom) {
         guestRoom.token = msg.token
-        sessionStorage.setItem(`territory-token-${guestRoom.code}`, msg.token)
+        sessionStorage.setItem(`neon-ground-token-${guestRoom.code}`, msg.token)
       } else {
-        sessionStorage.setItem('territory-token', msg.token)
+        sessionStorage.setItem('neon-ground-token', msg.token)
       }
     }
     joined = true
@@ -980,7 +980,7 @@ function commitNick() {
     return
   }
   if (name === savedNick) return
-  localStorage.setItem('territory-name', name)
+  localStorage.setItem('neon-ground-name', name)
   send({ type: 'rename', name })
 }
 
@@ -1514,9 +1514,9 @@ card.addEventListener('submit', (event) => {
   event.preventDefault()
   const name = nameInput.value.trim()
   if (!name) return
-  localStorage.setItem('territory-name', name)
+  localStorage.setItem('neon-ground-name', name)
   error.textContent = ''
-  send({ type: 'join', name, token: sessionStorage.getItem('territory-token') || '' })
+  send({ type: 'join', name, token: sessionStorage.getItem('neon-ground-token') || '' })
   sfx.startMusic()
 })
 
@@ -1560,7 +1560,7 @@ function handleScannedUrl(text) {
   const raw = viewHelpers.inviteCodeFromUrl(text)
   const code = window.P2P ? window.P2P.normalizeCode(raw) : raw.trim().toUpperCase()
   if (!code) {
-    error.textContent = "That QR code is not a Territory invite. Scan the host's code."
+    error.textContent = "That QR code is not a Neon Ground invite. Scan the host's code."
     return
   }
   codeInput.value = code
@@ -1732,11 +1732,11 @@ addBotBtn.addEventListener('click', () => {
 // buttons "broke" on mobile.
 function setSteerMode(on) {
   steer.checked = Boolean(on)
-  localStorage.setItem('territory-steer', steer.checked ? '1' : '0')
+  localStorage.setItem('neon-ground-steer', steer.checked ? '1' : '0')
   lastSteer = null
 }
 
-steer.checked = localStorage.getItem('territory-steer') === '1'
+steer.checked = localStorage.getItem('neon-ground-steer') === '1'
 steer.addEventListener('change', () => {
   setSteerMode(steer.checked)
 })

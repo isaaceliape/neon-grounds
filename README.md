@@ -1,8 +1,8 @@
-# Territory
+# Neon Ground
 
 **[▶ Play now!](https://isaaceliape.github.io/territory/play/) — free, no ads, no signup, nothing to install.**
 
-Steal ground, cut lines, and snake your way to the biggest patch of neon on the map. Territory is a fast multiplayer turf war for up to 12 players that runs entirely in the browser — on your phone on the couch, or on a laptop across the internet.
+Steal ground, cut lines, and snake your way to the biggest patch of neon on the map. Neon Ground is a fast multiplayer turf war for up to 12 players that runs entirely in the browser — on your phone on the couch, or on a laptop across the internet.
 
 ![The front door: host a session or join one](public/shots/picker.png)
 

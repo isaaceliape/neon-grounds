@@ -1,6 +1,6 @@
 {
-  "name": "Territory",
-  "short_name": "Territory",
+  "name": "Neon Ground",
+  "short_name": "Neon Ground",
   "description": "Close a loop to take the ground inside it. Cross a line and that player is out.",
   "start_url": ".",
   "scope": ".",

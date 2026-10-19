@@ -111,7 +111,7 @@ test('the page is served from the same port', async () => {
     const response = await fetch(`http://127.0.0.1:${server.port}/`)
     assert.equal(response.status, 200)
     const html = await response.text()
-    assert.match(html, /Territory/)
+    assert.match(html, /Neon Ground/)
   } finally {
     await server.close()
   }

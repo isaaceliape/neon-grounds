@@ -1,8 +1,8 @@
-// Territory offline shell. The game itself needs a connection (local server
+// Neon Ground offline shell. The game itself needs a connection (local server
 // or WebRTC room), but the page, art, and code load from cache after the
 // first visit, which is also what makes the app installable.
 // Bump CACHE on release so updates replace the old shell.
-const CACHE = 'territory-v5'
+const CACHE = 'neon-ground-v1'
 // Vite build output: flat stable names (see vite.config.js). The landing
 // lives at /, the game bundles (play.js/play.css + host-session.js chunk)
 // serve /play/; the rest below ships verbatim from public/.

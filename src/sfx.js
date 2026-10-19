@@ -2,8 +2,8 @@
 // The AudioContext is created only after the first click or key press, because
 // browsers block audio before a gesture. If Web Audio is missing, every call is a no-op.
 globalThis.sfx = (() => {
-  const STORE_KEY = 'territory-mute'
-  const MUSIC_STORE_KEY = 'territory-music-mute'
+  const STORE_KEY = 'neon-ground-mute'
+  const MUSIC_STORE_KEY = 'neon-ground-music-mute'
   const VOLUME = 0.25
   const MUSIC_VOLUME = 0.5
 
