@@ -356,7 +356,7 @@ export function startServer({ port = 0, log = false, gameOptions = {}, resultsLo
       const actual = server.address().port
       urls = networkUrls(actual)
       if (log) {
-        console.log('Neon Ground')
+        console.log('Neon Grounds')
         console.log(`Open on this machine: ${urls.local}`)
         if (urls.shared.length) {
           console.log('Others on the VPN open:')

@@ -10,7 +10,7 @@ const read = (name) => readFileSync(pub(name), 'utf8')
 
 test('the manifest describes an installable app with real icons', () => {
   const manifest = JSON.parse(read('manifest.webmanifest'))
-  assert.equal(manifest.name, 'Neon Ground')
+  assert.equal(manifest.name, 'Neon Grounds')
   assert.ok(manifest.short_name)
   assert.ok(manifest.start_url)
   assert.equal(manifest.display, 'standalone')
@@ -63,13 +63,13 @@ test('the local server serves PWA file types', () => {
 
 test('every deploy busts the service-worker cache', () => {
   const worker = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
-  assert.match(worker, /const CACHE = 'neon-ground-v\d+'/, 'shell cache is versioned')
+  assert.match(worker, /const CACHE = 'neon-grounds-v\d+'/, 'shell cache is versioned')
   assert.ok(worker.includes('skipWaiting'), 'new worker activates immediately')
   assert.ok(worker.includes('clients.claim'), 'new worker takes over open tabs')
   assert.ok(worker.includes('caches.delete'), 'old shell caches are purged')
   const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8')
   assert.ok(workflow.includes('rev-parse --short HEAD'), 'deploy stamps the cache with the commit')
-  assert.ok(workflow.includes("const CACHE = 'neon-ground-"), 'deploy rewrites the versioned cache name')
+  assert.ok(workflow.includes("const CACHE = 'neon-grounds-"), 'deploy rewrites the versioned cache name')
 })
 
 test('the shell list matches the Vite build output', () => {

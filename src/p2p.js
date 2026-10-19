@@ -5,7 +5,7 @@
 // Large messages (full snapshots carry ~56KB of base64 board) are split
 // into 16KB chunks because per-message limits vary by browser.
 globalThis.P2P = (() => {
-  const PEER_PREFIX = 'neon-ground-room-'
+  const PEER_PREFIX = 'neon-grounds-room-'
   // Short, unambiguous codes: no 0/O, 1/I/L.
   const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
   const CHUNK_SIZE = 16384

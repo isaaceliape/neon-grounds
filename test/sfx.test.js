@@ -11,8 +11,8 @@ function makeEnv({ stored = null, musicStored = null, withAudio = true, trackAud
   const timers = []
   const cleared = []
   const entries = []
-  if (stored != null) entries.push(['neon-ground-mute', stored])
-  if (musicStored != null) entries.push(['neon-ground-music-mute', musicStored])
+  if (stored != null) entries.push(['neon-grounds-mute', stored])
+  if (musicStored != null) entries.push(['neon-grounds-music-mute', musicStored])
   const store = new Map(entries)
   const param = () => ({
     value: 1,
@@ -169,7 +169,7 @@ test('mute silences everything and is remembered', () => {
   listeners.pointerdown()
   sfx.setMuted(true)
   assert.equal(sfx.isMuted(), true)
-  assert.equal(store.get('neon-ground-mute'), '1')
+  assert.equal(store.get('neon-grounds-mute'), '1')
   assert.equal(stats.masterGain.gain.value, 0)
   const before = stats.oscillators + stats.noiseSources
   sfx.capture(0.5)
@@ -177,7 +177,7 @@ test('mute silences everything and is remembered', () => {
   sfx.win()
   assert.equal(stats.oscillators + stats.noiseSources, before)
   sfx.setMuted(false)
-  assert.equal(store.get('neon-ground-mute'), '0')
+  assert.equal(store.get('neon-grounds-mute'), '0')
   assert.ok(stats.masterGain.gain.value > 0)
 })
 
@@ -270,7 +270,7 @@ test('music has its own mute, independent of effects', () => {
   sfx.startMusic()
   sfx.setMusicMuted(true)
   assert.equal(sfx.isMusicMuted(), true)
-  assert.equal(store.get('neon-ground-music-mute'), '1')
+  assert.equal(store.get('neon-grounds-music-mute'), '1')
   const before = stats.oscillators
   timers[0]()
   assert.equal(stats.oscillators, before, 'theme stays silent')
@@ -278,7 +278,7 @@ test('music has its own mute, independent of effects', () => {
   sfx.tick()
   assert.ok(stats.oscillators > effects, 'effects still sound')
   sfx.setMusicMuted(false)
-  assert.equal(store.get('neon-ground-music-mute'), '0')
+  assert.equal(store.get('neon-grounds-music-mute'), '0')
   stats.created[0].currentTime = 5
   timers[0]()
   assert.ok(stats.oscillators > effects + 1, 'theme returns')

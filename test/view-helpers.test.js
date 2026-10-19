@@ -142,8 +142,8 @@ test('touch helpers: held buttons make a turn, and phones get smaller cells', ()
 test('invite links carry the room code for the join screen', () => {
   const { roomInviteLink } = loadHelpers()
   assert.equal(
-    roomInviteLink('https://isaaceliape.github.io/neon-grounds/', 'tbftu'),
-    'https://isaaceliape.github.io/neon-grounds/?code=TBFTU',
+    roomInviteLink('https://isaaceliape.github.io/neon-groundss/', 'tbftu'),
+    'https://isaaceliape.github.io/neon-groundss/?code=TBFTU',
   )
   assert.equal(
     roomInviteLink('http://localhost:4174/', 'ABCDE'),
@@ -153,7 +153,7 @@ test('invite links carry the room code for the join screen', () => {
 
 test('scanned invite URLs give back their room code', () => {
   const { inviteCodeFromUrl } = loadHelpers()
-  assert.equal(inviteCodeFromUrl('https://isaaceliape.github.io/neon-grounds/?code=WF9HY'), 'WF9HY')
+  assert.equal(inviteCodeFromUrl('https://isaaceliape.github.io/neon-groundss/?code=WF9HY'), 'WF9HY')
   assert.equal(inviteCodeFromUrl('http://192.168.0.5:4173/?code=abcde&other=1'), 'abcde')
   assert.equal(inviteCodeFromUrl('https://example.com/'), '')
   assert.equal(inviteCodeFromUrl('not a url'), '')

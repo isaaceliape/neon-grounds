@@ -24,7 +24,7 @@ test('room codes are short, unambiguous, and normalize cleanly', () => {
   // Ambiguous characters can never be in a code, so they are dropped rather
   // than mapped (mapping could join the wrong room).
   assert.equal(P2P.normalizeCode('AB01ILODE'), 'ABDE')
-  assert.equal(P2P.peerIdFor('abcde'), 'neon-ground-room-abcde')
+  assert.equal(P2P.peerIdFor('abcde'), 'neon-grounds-room-abcde')
 })
 
 test('chunking round-trips small and snapshot-sized messages', () => {

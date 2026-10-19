@@ -18,7 +18,7 @@ test('the invite QR encodes the room link as scalable SVG', () => {
   const qrcode = loadQr()
   assert.equal(typeof qrcode, 'function', 'vendored generator exposes qrcode()')
   const code = qrcode(0, 'M')
-  code.addData('https://isaaceliape.github.io/neon-grounds/?code=HELLO')
+  code.addData('https://isaaceliape.github.io/neon-groundss/?code=HELLO')
   code.make()
   const svg = code.createSvgTag({ cellSize: 6, margin: 0, scalable: true })
   assert.ok(svg.startsWith('<svg'), 'renders an SVG tag')
@@ -43,7 +43,7 @@ test('a generated invite QR decodes back to its URL', () => {
   vm.runInNewContext(genSource, sandbox)
   const decodeSource = readFileSync(new URL('../public/jsqr.min.js', import.meta.url), 'utf8')
   vm.runInNewContext(decodeSource, sandbox)
-  const url = 'https://isaaceliape.github.io/neon-grounds/?code=WF9HY'
+  const url = 'https://isaaceliape.github.io/neon-groundss/?code=WF9HY'
   const modules = sandbox.qrcode(0, 'M')
   modules.addData(url)
   modules.make()

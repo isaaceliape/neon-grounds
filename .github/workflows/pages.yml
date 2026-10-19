@@ -35,9 +35,9 @@ jobs:
         run: |
           # Stamp the built worker with this commit so every deploy busts
           # the old shell: the worker installs the fresh files, deletes
-          # older neon-ground-* caches on activate, and takes over open tabs.
-          ver="neon-ground-$(git rev-parse --short HEAD)"
-          sed -i "s/const CACHE = 'neon-ground-v[0-9][0-9]*'/const CACHE = '${ver}'/" dist/sw.js
+          # older neon-grounds-* caches on activate, and takes over open tabs.
+          ver="neon-grounds-$(git rev-parse --short HEAD)"
+          sed -i "s/const CACHE = 'neon-grounds-v[0-9][0-9]*'/const CACHE = '${ver}'/" dist/sw.js
           grep -q "const CACHE = '${ver}'" dist/sw.js
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
