@@ -70,7 +70,7 @@ test('the shell list matches the Vite build output', () => {
   assert.ok(shell.length > 0, 'shell lists bundles')
   for (const file of shell) {
     assert.ok(
-      ['index.js', 'index.css', 'host-session.js', 'peerjs.min.js'].includes(file),
+      ['index.js', 'index.css', 'host-session.js', 'peerjs.min.js', 'qrcode.min.js', 'jsqr.min.js'].includes(file),
       `${file} is a real build output or vendored file`,
     )
   }

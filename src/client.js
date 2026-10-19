@@ -34,10 +34,21 @@ const hostBackBtn = document.querySelector('#host-back')
 const joinSetup = document.querySelector('#join-setup')
 const guestNameInput = document.querySelector('#guest-name')
 const joinBackBtn = document.querySelector('#join-back')
+const scanBtn = document.querySelector('#scan-qr')
+const scannerBox = document.querySelector('#scanner')
+const scannerVideo = document.querySelector('#scanner-video')
+const scannerCanvas = document.querySelector('#scanner-canvas')
+const scannerHint = document.querySelector('#scanner-hint')
+const scannerStopBtn = document.querySelector('#scanner-stop')
+let scannerStream = null
+let scannerRaf = 0
+let scannerLast = 0
 const hostRoomBtn = document.querySelector('#host-room')
 const codeInput = document.querySelector('#code')
 const joinRoomBtn = document.querySelector('#join-room')
 const inviteRow = document.querySelector('#invite-row')
+const qrBtn = document.querySelector('#show-qr')
+const qrBox = document.querySelector('#qr')
 const copyCodeBtn = document.querySelector('#copy-code')
 const copyLinkBtn = document.querySelector('#copy-link')
 const queryParams = new URLSearchParams(location.search)
@@ -1040,6 +1051,7 @@ function renderShare(show) {
   roomCodeEl.replaceChildren()
   roomCodeEl.hidden = true
   inviteRow.hidden = true
+  hideQr()
   if (!show) return
   if (hostedCode) {
     const label = document.createElement('span')
@@ -1510,6 +1522,96 @@ card.addEventListener('submit', (event) => {
 
 hostRoomBtn.addEventListener('click', hostOnlineRoom)
 joinRoomBtn.addEventListener('click', joinOnlineRoom)
+
+function stopScanner() {
+  if (scannerRaf) {
+    cancelAnimationFrame(scannerRaf)
+    scannerRaf = 0
+  }
+  if (scannerStream) {
+    for (const track of scannerStream.getTracks()) track.stop()
+    scannerStream = null
+  }
+  scannerVideo.removeAttribute('src')
+  scannerVideo.srcObject = null
+  scannerBox.hidden = true
+}
+
+function scanFrame() {
+  const w = scannerVideo.videoWidth
+  const h = scannerVideo.videoHeight
+  if (!w || !h) return null
+  // Big phone sensors downscale: QR reads fine small, and jsQR is O(pixels).
+  const scale = Math.min(1, 480 / Math.max(w, h))
+  const cw = Math.max(1, Math.round(w * scale))
+  const ch = Math.max(1, Math.round(h * scale))
+  if (scannerCanvas.width !== cw || scannerCanvas.height !== ch) {
+    scannerCanvas.width = cw
+    scannerCanvas.height = ch
+  }
+  const ctx = scannerCanvas.getContext('2d', { willReadFrequently: true })
+  ctx.drawImage(scannerVideo, 0, 0, cw, ch)
+  const found = window.jsQR(ctx.getImageData(0, 0, cw, ch).data, cw, ch)
+  return found?.data ?? null
+}
+
+function handleScannedUrl(text) {
+  stopScanner()
+  const raw = viewHelpers.inviteCodeFromUrl(text)
+  const code = window.P2P ? window.P2P.normalizeCode(raw) : raw.trim().toUpperCase()
+  if (!code) {
+    error.textContent = "That QR code is not a Territory invite. Scan the host's code."
+    return
+  }
+  codeInput.value = code
+  joinOnlineRoom()
+}
+
+async function startScanner() {
+  if (scannerStream || scannerRaf) return
+  if (typeof window.jsQR !== 'function' || !navigator.mediaDevices?.getUserMedia) {
+    error.textContent = 'Camera scanning is not available on this device or browser.'
+    return
+  }
+  error.textContent = ''
+  scannerHint.textContent = "Point the camera at the host's QR code."
+  scannerBox.hidden = false
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+  } catch (err) {
+    scannerBox.hidden = true
+    error.textContent =
+      err?.name === 'NotAllowedError'
+        ? 'Camera access was denied. Allow it in the browser, then try again.'
+        : 'No camera is available on this device.'
+    return
+  }
+  scannerVideo.srcObject = scannerStream
+  try {
+    await scannerVideo.play()
+  } catch {
+    // Muted inline playback is allowed everywhere modern; if it still
+    // fails the frames simply never arrive and Cancel stays available.
+  }
+  scannerLast = 0
+  const tick = (now) => {
+    scannerRaf = 0
+    if (!scannerStream) return
+    if (now - scannerLast > 120) {
+      scannerLast = now
+      const hit = scanFrame()
+      if (hit) {
+        handleScannedUrl(hit)
+        return
+      }
+    }
+    scannerRaf = requestAnimationFrame(tick)
+  }
+  scannerRaf = requestAnimationFrame(tick)
+}
+
+scanBtn.addEventListener('click', startScanner)
+scannerStopBtn.addEventListener('click', stopScanner)
 codeInput.addEventListener('keydown', (event) => {
   if (event.key !== 'Enter') return
   event.preventDefault()
@@ -1528,6 +1630,7 @@ codeInput.addEventListener('input', () => {
 
 function showSetup(which) {
   error.textContent = ''
+  if (which !== 'join') stopScanner()
   picker.hidden = which !== 'picker'
   hostSetup.hidden = which !== 'host'
   joinSetup.hidden = which !== 'join'
@@ -1580,6 +1683,34 @@ copyCodeBtn.addEventListener('click', () => {
 })
 copyLinkBtn.addEventListener('click', () => {
   if (hostedCode) copyText(viewHelpers.roomInviteLink(location.origin + location.pathname, hostedCode), copyLinkBtn)
+})
+
+function inviteUrl() {
+  if (!hostedCode) return ''
+  return viewHelpers.roomInviteLink(location.origin + location.pathname, hostedCode)
+}
+
+function hideQr() {
+  qrBox.hidden = true
+  qrBox.replaceChildren()
+  qrBtn.textContent = 'Show QR code'
+}
+
+// Phones join by scanning the invite link: no typing the room code.
+qrBtn.addEventListener('click', () => {
+  if (!qrBox.hidden) {
+    hideQr()
+    return
+  }
+  const url = inviteUrl()
+  if (!url || typeof window.qrcode !== 'function') return
+  const code = window.qrcode(0, 'M')
+  code.addData(url)
+  code.make()
+  qrBox.replaceChildren()
+  qrBox.insertAdjacentHTML('beforeend', code.createSvgTag({ cellSize: 6, margin: 0, scalable: true }))
+  qrBox.hidden = false
+  qrBtn.textContent = 'Hide QR code'
 })
 
 nick.addEventListener('keydown', (event) => {

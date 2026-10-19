@@ -8,6 +8,7 @@ function loadHelpers() {
   const source = readFileSync(new URL('../src/view-helpers.js', import.meta.url), 'utf8')
   const sandbox = {}
   sandbox.globalThis = sandbox
+  sandbox.URL = URL
   vm.runInNewContext(source, sandbox)
   return sandbox.viewHelpers
 }
@@ -148,6 +149,15 @@ test('invite links carry the room code for the join screen', () => {
     roomInviteLink('http://localhost:4174/', 'ABCDE'),
     'http://localhost:4174/?code=ABCDE',
   )
+})
+
+test('scanned invite URLs give back their room code', () => {
+  const { inviteCodeFromUrl } = loadHelpers()
+  assert.equal(inviteCodeFromUrl('https://isaaceliape.github.io/territory/?code=WF9HY'), 'WF9HY')
+  assert.equal(inviteCodeFromUrl('http://192.168.0.5:4173/?code=abcde&other=1'), 'abcde')
+  assert.equal(inviteCodeFromUrl('https://example.com/'), '')
+  assert.equal(inviteCodeFromUrl('not a url'), '')
+  assert.equal(inviteCodeFromUrl(null), '')
 })
 
 test('takeover election picks the lowest connected human, never the host', () => {

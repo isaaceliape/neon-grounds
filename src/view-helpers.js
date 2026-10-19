@@ -95,6 +95,16 @@ globalThis.viewHelpers = (() => {
     return `${clean}?code=${encodeURIComponent(String(code ?? '').toUpperCase())}`
   }
 
+  // The room code inside a scanned invite URL, or '' when the QR is not
+  // one of ours. Accepts any host: a code from an older deploy still joins.
+  function inviteCodeFromUrl(text) {
+    try {
+      return String(new URL(String(text)).searchParams.get('code') ?? '')
+    } catch {
+      return ''
+    }
+  }
+
   // "1 win" / "3 wins" for the session counter, or '' when there are none.
   function winsLabel(wins, name) {
     const count = wins?.[String(name).toLowerCase()] ?? 0
@@ -133,6 +143,7 @@ globalThis.viewHelpers = (() => {
     botLabel,
     winsLabel,
     roomInviteLink,
+    inviteCodeFromUrl,
     electSuccessor,
     isEnded, listedPlayers, peopleForNick, winnerText,
     wallWarnings, deathFeedText, captureFeedText, isDangerCell,

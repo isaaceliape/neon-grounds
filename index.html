@@ -76,6 +76,13 @@
         <label for="code">Room code</label>
         <input id="code" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE">
         <button type="button" id="join-room">Join room</button>
+        <button type="button" id="scan-qr">Scan QR code</button>
+        <div id="scanner" hidden>
+          <video id="scanner-video" playsinline muted></video>
+          <canvas id="scanner-canvas" hidden></canvas>
+          <p id="scanner-hint">Point the camera at the host's QR code.</p>
+          <button type="button" id="scanner-stop" class="ghost">Cancel</button>
+        </div>
         <button type="button" id="join-back" class="ghost">Back</button>
       </div>
       <div id="join-row" hidden>
@@ -88,7 +95,9 @@
         <div id="invite-row" hidden>
           <button type="button" id="copy-code">Copy code</button>
           <button type="button" id="copy-link">Copy invite link</button>
+          <button type="button" id="show-qr">Show QR code</button>
         </div>
+        <div id="qr" hidden></div>
         <label id="nick-label" for="nick">Your name</label>
         <input id="nick" maxlength="16" autocomplete="off">
         <ol id="roster"></ol>
@@ -136,8 +145,10 @@
     </label>
     <button type="button" id="restart" hidden>Restart</button>
   </div>
-  <!-- PeerJS stays a classic script (vendored, no ESM build); the app is one module. -->
+  <!-- PeerJS and the QR generator stay classic scripts (vendored, no ESM builds); the app is one module. -->
   <script src="peerjs.min.js"></script>
+  <script src="qrcode.min.js"></script>
+  <script src="jsqr.min.js"></script>
   <script type="module" src="/src/client.js"></script>
 </body>
 </html>

@@ -14,6 +14,8 @@ const SHELL = [
   'index.css',
   'host-session.js',
   'peerjs.min.js',
+  'qrcode.min.js',
+  'jsqr.min.js',
   'theme.mp3',
   'icon-192.png',
   'icon-512.png',

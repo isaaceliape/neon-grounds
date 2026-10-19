@@ -176,6 +176,17 @@ button.ghost { background: transparent; border-color: var(--line); color: var(--
 
 #room-code { margin: 0; }
 
+/* Scannable invite link for phones: white card so the code reads. */
+#qr { display: grid; place-items: center; margin-top: 12px; }
+#qr[hidden] { display: none; }
+#qr svg { width: min(220px, 100%); height: auto; background: #fff; padding: 10px; border-radius: 8px; }
+
+/* Camera QR scanner on the join screen. */
+#scanner { display: grid; gap: 8px; margin-top: 12px; }
+#scanner[hidden] { display: none; }
+#scanner-video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; background: #000; }
+#scanner-hint { margin: 0; color: var(--muted); font-size: 14px; }
+
 #room-code strong { font-size: 28px; letter-spacing: 0.3em; color: var(--glow); text-shadow: 0 0 12px rgba(57, 255, 210, 0.7); }
 
 #room-code:empty, #pick-hint:empty { display: none; }
