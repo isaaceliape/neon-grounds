@@ -50,16 +50,4 @@ That one tension is the whole game, and it never gets old:
 - Standing on old enemy land is safe; only fresh captures kill.
 - Most ground when the clock stops wins.
 
-## For developers
-
-```sh
-npm install
-npm run dev      # Vite + hot reload on :4174
-npm test         # the suite: sim, migration, networking, PWA
-npm run build    # minified bundle into dist/
-npm start        # serve dist/ on :4173 (+ the ?local WebSocket sim)
-```
-
-Sources are ES modules in `src/`, the shared sim is `server/game.js`, and `public/` holds verbatim files (icons, manifest, vendored PeerJS/QR libraries, theme, service worker). The landing page is `index.html` at the root; the game lives in `play/`. Pushing to `main` tests, builds, and deploys to GitHub Pages, stamping the service-worker cache so every deploy lands fresh.
-
 Theme: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free under the Pixabay Content License).
