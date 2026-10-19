@@ -23,6 +23,8 @@ If the Mac asks whether Node may accept incoming connections, allow it. Set `POR
 
 Stop the server with Ctrl+C in that terminal. Closing a browser does not stop the server.
 
+Run `npm test` for the suite: sim rules, migration, networking, and PWA shell checks.
+
 ## Online rooms (no VPN)
 
 Opening the page shows two choices: **Host a session** or **Join a session**. The host types their name and gets a 5-letter room code plus a one-tap invite link (`?code=` URL that fills the code in for guests) and a scannable QR of the same link. Everyone else opens the page or the link anywhere on the internet, types their name and the code, and joins. Phones can skip the typing: Scan QR code on the join screen reads the host's code through the camera and joins straight away. The same 12 seats and 3 bots apply.
@@ -31,11 +33,11 @@ The host's browser runs the round, peer to peer over WebRTC. If the host's tab c
 
 Online rooms need internet access to reach the free PeerJS signaling server that introduces the players. After that introduction, game traffic flows directly between browsers. Win counts last for the tab session, and rounds are not written to `logs/results.log` (there is no server to write it).
 
-The app sources live in `src/` as ES modules, the sim in `server/game.js` (shared by the browser host and the Node server), and `public/` holds only files that ship verbatim: icons, the manifest, the vendored PeerJS client, the theme song, and the service worker. Pushing to `main` runs the tests, builds the bundle, and deploys `dist/` to GitHub Pages automatically (see `.github/workflows/pages.yml`); enable Pages in the repo settings with the workflow source and share that URL instead of a VPN address.
+The app sources live in `src/` as ES modules, the sim in `server/game.js` (shared by the browser host and the Node server), and `public/` holds only files that ship verbatim: icons, the manifest, the vendored PeerJS client, the QR show/scan libraries, the theme song, and the service worker. Pushing to `main` runs the tests, builds the bundle, and deploys `dist/` to GitHub Pages automatically (see `.github/workflows/pages.yml`); enable Pages in the repo settings with the workflow source and share that URL instead of a VPN address.
 
 ## Joining
 
-Type a name and click Join. Names are up to 16 characters. If someone already has that name, the next person becomes "Name 2".
+Type a name, type the room code (or scan the host's QR with Scan QR code), and click Join room. Names are up to 16 characters. If someone already has that name, the next person becomes "Name 2".
 
 The first human in the room is the host. A bot is never the host. If the host leaves for good, the next human becomes host. If nobody else is there, the next person who joins becomes host.
 
@@ -49,6 +51,7 @@ Everyone who has joined sees the same room: the player list, their color, and wh
 - Round length. The host picks 1, 2, 3, or 5 minutes. The default is 3.
 - Add bot. Host only. Pick Easy, Normal, or Hard, then click Add bot. A room holds up to 3 bots. The host removes one with the x next to its name.
 - Start. Host only. Other players see a disabled "Waiting for the host" button.
+- Room code. The host's 5-letter code with Copy code, Copy invite link, and Show QR code, which renders the invite link as a QR phones can scan.
 
 Nothing moves until the host clicks Start. Then there is a 3 second countdown. During the countdown you can aim, but the snakes do not move yet.
 
@@ -144,10 +147,11 @@ During a round:
 
 - Scoreboard, top left. Name and percent of the map. Rows slide when the ranking changes and flash when a player gains ground. Dead players are dimmed but their land percent stays.
 - Timer, top center. It counts down. The last three seconds before movement are shown large.
-- Mini-map, top right. The whole board. It clears when a new round starts, so the previous round does not stay on it.
+- Mini-map, top right. The whole board. It clears when a new round starts, so the previous round does not stay on it. Hide mini map in the hamburger menu drops it, and the menu and feed slide back up to the corner.
+- Show FPS, from the hamburger menu, adds a frame-time readout at the bottom left. Append `?fps=1` to the URL to force it on.
 - Kill feed, under the mini-map. Who was cut, boxed in, crashed, hit the wall, or left, and who took 1% or more of the map. It keeps four lines and each fades after 5 seconds.
 - Restart, in the hamburger menu, host only, during a round.
-- A bright head with a nose showing the direction you are heading, and a pulsing halo around your own.
+- A bright head with a nose showing the direction you are heading: a dark outline and a white pulsing halo around your own, so it reads on your own land.
 - A line is drawn with a shimmer. Another player's exposed line within 10 cells of your head pulses red, so you can see what you could cut or what could cut you.
 - A red glow along a wall when you are driving toward it within 8 cells. It gets stronger as you close in.
 
