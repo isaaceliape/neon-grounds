@@ -78,6 +78,39 @@ fpsBox.checked = fpsOn
 fpsBox.addEventListener('change', () => {
   setFps(fpsBox.checked)
 })
+
+// Hide mini map: drops the corner map for a cleaner board. The menu and
+// feed slide back up to the corner via body.mini-hidden. Saved like the
+// other menu toggles.
+const miniBox = document.querySelector('#hide-mini')
+let miniHiddenPref = false
+try {
+  miniHiddenPref = localStorage.getItem('territory-hide-mini') === '1'
+} catch {
+  miniHiddenPref = false
+}
+
+function paintMiniVisible() {
+  mini.hidden = miniHiddenPref
+  document.body.classList.toggle('mini-hidden', miniHiddenPref)
+}
+
+function setMiniHidden(hidden) {
+  miniHiddenPref = Boolean(hidden)
+  miniBox.checked = miniHiddenPref
+  try {
+    localStorage.setItem('territory-hide-mini', miniHiddenPref ? '1' : '0')
+  } catch {
+    // storage can be unavailable; the setting then lasts until reload
+  }
+  paintMiniVisible()
+}
+
+miniBox.checked = miniHiddenPref
+miniBox.addEventListener('change', () => {
+  setMiniHidden(miniBox.checked)
+})
+paintMiniVisible()
 const roomCodeEl = document.querySelector('#room-code')
 const startBtn = document.querySelector('#start')
 const addBotBtn = document.querySelector('#add-bot')

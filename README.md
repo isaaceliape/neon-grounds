@@ -68,7 +68,7 @@ Hold the key to keep turning. If you never turn, you drive straight.
 
 Steer with the cursor: the snake curves toward the pointer. If the pointer is directly behind you, it turns sideways first. Toggle it anytime from the hamburger menu; off by default, and the choice is saved in this browser. Pressing a turn key or touch button switches back to buttons.
 
-Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A hamburger menu beside the mini-map holds Music, Sound, Steer with cursor, Show FPS (a frame-time readout for diagnosing hitches), Restart (host only, during a round), and (on phones and tablets that support it) Full screen.
+Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A hamburger menu beside the mini-map holds Music, Sound, Steer with cursor, Show FPS (a frame-time readout for diagnosing hitches), Hide mini map, Restart (host only, during a round), and (on phones and tablets that support it) Full screen.
 
 You start in the middle of a small square of your own color, aimed toward the middle of the map.
 
