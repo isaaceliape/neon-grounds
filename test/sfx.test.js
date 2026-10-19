@@ -149,6 +149,20 @@ test('theme music waits for a gesture, then loops', () => {
   assert.ok(stats.oscillators > mid, 'keeps scheduling as time advances')
 })
 
+test('the theme plays drums, pad, and arp alongside lead and bass', () => {
+  const { sfx, stats, listeners, timers } = makeEnv()
+  listeners.pointerdown()
+  sfx.startMusic()
+  // The first pump schedules steps 0 and 1: bar pad, lead, bass, and kick
+  // on step 0, the arp in the lead's gap on step 1. Advancing time reaches
+  // step 2 and its snare.
+  timers[0]()
+  assert.ok(stats.oscillators >= 6, `several voices per step (got ${stats.oscillators})`)
+  stats.created[0].currentTime = 5
+  timers[0]()
+  assert.ok(stats.noiseSources >= 1, 'the snare fires a noise hit')
+})
+
 test('stopMusic halts the loop', () => {
   const { sfx, listeners, timers, cleared } = makeEnv()
   listeners.pointerdown()

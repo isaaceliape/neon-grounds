@@ -160,7 +160,9 @@ globalThis.sfx = (() => {
 
   // Looping background theme. 32 eighth-note steps (~8.3s per loop at 116bpm)
   // over Am F C G. 0 means rest. Gains stay low so this sits under the effects.
-  // Retune it here: swap the frequencies, keep the 32-step shape.
+  // Retune it here: swap the frequencies, keep the 32-step shape. The drums
+  // follow the steps (kick 0/4, snare 2/6 of each bar), the pad holds the
+  // bar chord, and the arp plucks it an octave up in the lead's gaps.
   const MUSIC_BPM = 116
   const MUSIC_STEP = 60 / MUSIC_BPM / 2
   const MUSIC_LEAD = [
@@ -175,6 +177,15 @@ globalThis.sfx = (() => {
     130.81, 0, 0, 0, 130.81, 0, 0, 0,
     98, 0, 0, 0, 98, 0, 0, 0,
   ]
+  // One chord per bar for the pad: Am, F, C (G C E), G.
+  const MUSIC_CHORDS = [
+    [220, 261.63, 329.63],
+    [174.61, 220, 261.63],
+    [196, 261.63, 329.63],
+    [196, 246.94, 293.66],
+  ]
+  // Arp order through the bar chord: root, third, fifth, third.
+  const MUSIC_ARP = [0, 1, 2, 1]
 
   let playing = false
   let musicTimer = null
@@ -182,12 +193,14 @@ globalThis.sfx = (() => {
   let stepIdx = 0
 
   // One theme note at an absolute context time, on the music bus.
-  function musicTone(freq, when, length, { type = 'sine', gain = 0.1 } = {}) {
+  // slideTo bends the pitch down (or up) across the note: the kick uses it.
+  function musicTone(freq, when, length, { type = 'sine', gain = 0.1, slideTo = 0 } = {}) {
     if (!ctx || muted || musicMuted) return
     const osc = ctx.createOscillator()
     const amp = ctx.createGain()
     osc.type = type
     osc.frequency.setValueAtTime(freq, when)
+    if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, when + length)
     amp.gain.setValueAtTime(0.0001, when)
     amp.gain.exponentialRampToValueAtTime(gain, when + 0.02)
     amp.gain.exponentialRampToValueAtTime(0.0001, when + length)
@@ -197,12 +210,61 @@ globalThis.sfx = (() => {
     osc.stop(when + length + 0.03)
   }
 
+  // Shared white-noise buffer so the snare (and any future shaker) costs
+  // one allocation no matter how long the loop runs.
+  let noiseBuffer = null
+  function getNoiseBuffer() {
+    if (noiseBuffer || !ctx || typeof ctx.createBuffer !== 'function') return noiseBuffer
+    const frames = Math.max(1, Math.floor(ctx.sampleRate * 0.25))
+    noiseBuffer = ctx.createBuffer(1, frames)
+    const data = noiseBuffer.getChannelData(0)
+    for (let i = 0; i < frames; i += 1) data[i] = Math.random() * 2 - 1
+    return noiseBuffer
+  }
+
+  // One filtered noise hit at an absolute context time, on the music bus.
+  function musicNoise(when, length, { gain = 0.1, freq = 1800, type = 'highpass' } = {}) {
+    if (!ctx || muted || musicMuted) return
+    if (typeof ctx.createBufferSource !== 'function' || typeof ctx.createBiquadFilter !== 'function') return
+    const buffer = getNoiseBuffer()
+    if (!buffer) return
+    const src = ctx.createBufferSource()
+    src.buffer = buffer
+    const filter = ctx.createBiquadFilter()
+    filter.type = type
+    filter.frequency.setValueAtTime(freq, when)
+    const amp = ctx.createGain()
+    amp.gain.setValueAtTime(0.0001, when)
+    amp.gain.exponentialRampToValueAtTime(gain, when + 0.01)
+    amp.gain.exponentialRampToValueAtTime(0.0001, when + length)
+    src.connect(filter)
+    filter.connect(amp)
+    amp.connect(music)
+    src.start(when)
+    if (typeof src.stop === 'function') src.stop(when + length + 0.03)
+  }
+
   function playStep(i, when) {
+    const chord = MUSIC_CHORDS[(i >> 3) % MUSIC_CHORDS.length]
     const lead = MUSIC_LEAD[i]
-    if (lead) musicTone(lead, when, 0.22, { type: 'square', gain: 0.09 })
+    if (lead) {
+      musicTone(lead, when, 0.22, { type: 'square', gain: 0.09 })
+    } else {
+      const pluck = chord[MUSIC_ARP[(i >> 1) % MUSIC_ARP.length]] * 2
+      musicTone(pluck, when, 0.11, { type: 'triangle', gain: 0.05 })
+    }
     const bass = MUSIC_BASS[i]
     if (bass) musicTone(bass, when, 0.24, { type: 'triangle', gain: 0.2 })
-    if (i % 2 === 1) musicTone(8000, when, 0.03, { type: 'sine', gain: 0.035 })
+    const beat = i % 8
+    if (beat === 0 || beat === 4) musicTone(150, when, 0.12, { type: 'sine', gain: 0.3, slideTo: 45 })
+    if (beat === 2 || beat === 6) musicNoise(when, 0.09, { gain: 0.11, freq: 1800 })
+    if (beat === 0) {
+      for (const freq of chord) musicTone(freq, when, MUSIC_STEP * 8, { type: 'sine', gain: 0.03 })
+    }
+    if (i % 2 === 1) {
+      const open = beat === 7
+      musicTone(8000, when, open ? 0.09 : 0.03, { type: 'sine', gain: open ? 0.05 : 0.035 })
+    }
   }
 
   // Schedule notes ~0.6s ahead so the loop holds steady under load.

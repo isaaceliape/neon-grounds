@@ -154,7 +154,7 @@ Effects: closing a loop flashes the taken ground and shows how much you took. A 
 
 Short synthesized sounds play for captures, deaths, the countdown, GO, and the end of a round. There are no audio files. Browsers only allow sound after you click or press a key, so the first sound comes after that. The Sound on/off button, bottom right, mutes everything, and the choice is saved in this browser.
 
-A looping theme (lead, bass, and hats over Am F C G, about 8 seconds per loop) starts once you join and keeps playing behind the round. The Music on/off button above it silences just the theme; Sound mutes everything. Both choices are saved in this browser. Retune it in `public/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
+A looping theme (lead, bass, kick, snare, hats, a bar-long chord pad, and an arpeggio answering the lead, over Am F C G, about 8 seconds per loop) starts once you join and keeps playing behind the round. The Music on/off button above it silences just the theme; Sound mutes everything. Both choices are saved in this browser. Retune it in `public/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
 
 ## Wins this session
 
