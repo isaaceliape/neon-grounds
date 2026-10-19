@@ -1417,11 +1417,19 @@ function drawHead(x, y, cell, body, showNames = true) {
   ctx.fillStyle = body.color
   ctx.arc(x, y, radius, 0, Math.PI * 2)
   ctx.fill()
+  // Dark outline so the head reads on its own land, where it would
+  // otherwise be the same neon on the same neon.
+  ctx.beginPath()
+  ctx.lineWidth = Math.max(2, radius * 0.28)
+  ctx.strokeStyle = '#070910'
+  ctx.arc(x, y, radius, 0, Math.PI * 2)
+  ctx.stroke()
   if (body.id === myId && phase !== 'over') {
     const pulse = REDUCED_MOTION ? 0.5 : 0.5 + 0.5 * Math.sin(performance.now() / 170)
     ctx.beginPath()
     ctx.arc(x, y, radius * (1.8 + 0.7 * pulse), 0, Math.PI * 2)
-    ctx.strokeStyle = body.color
+    // White, not body color: it has to pop on every land color.
+    ctx.strokeStyle = '#f4fff8'
     ctx.globalAlpha = 0.65 - 0.45 * pulse
     ctx.lineWidth = 2.5
     ctx.stroke()
