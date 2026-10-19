@@ -78,7 +78,7 @@ test('the shell list matches the Vite build output', () => {
   assert.ok(config.includes("chunkFileNames: '[name].js'"), 'chunks keep stable names')
   assert.ok(config.includes("assetFileNames: '[name][extname]'"), 'assets keep stable names')
   const worker = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
-  const shell = [...worker.matchAll(/'([^']+\.(?:js|css|png))'/g)].map((match) => match[1])
+  const shell = [...worker.matchAll(/'([^']+\.(?:js|css|png|woff2))'/g)].map((match) => match[1])
   assert.ok(shell.length > 0, 'shell lists bundles')
   for (const file of shell) {
     assert.ok(
@@ -89,6 +89,9 @@ test('the shell list matches the Vite build output', () => {
         'peerjs.min.js',
         'qrcode.min.js',
         'jsqr.min.js',
+        'vendor/fontawesome/css/fontawesome.min.css',
+        'vendor/fontawesome/css/solid.min.css',
+        'vendor/fontawesome/webfonts/fa-solid-900.woff2',
         'shots/picker.png',
         'shots/waiting-room.png',
         'shots/round.png',

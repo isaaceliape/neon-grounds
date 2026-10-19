@@ -935,10 +935,10 @@ function showCard(msg) {
   botRow.hidden = !host
   const bots = viewHelpers.botCount(msg)
   addBotBtn.disabled = bots >= viewHelpers.MAX_BOTS
-  addBotBtn.textContent = bots >= viewHelpers.MAX_BOTS ? 'Bot limit reached' : 'Add bot'
+  setLabel(addBotBtn, bots >= viewHelpers.MAX_BOTS ? 'Bot limit reached' : 'Add bot')
   startBtn.hidden = false
   startBtn.disabled = !host
-  startBtn.textContent = host ? (ended ? 'Play again' : 'Start') : 'Waiting for the host'
+  setLabel(startBtn, host ? (ended ? 'Play again' : 'Start') : 'Waiting for the host')
   nickLabel.hidden = myId == null
   nick.hidden = myId == null
   syncNick(viewHelpers.peopleForNick(msg))
@@ -1671,10 +1671,11 @@ async function copyText(text, button, doneLabel = 'Copied!') {
     }
     temp.remove()
   }
-  const original = button.textContent
-  button.textContent = doneLabel
+  const slot = button.querySelector('span') || button
+  const original = slot.textContent
+  slot.textContent = doneLabel
   setTimeout(() => {
-    button.textContent = original
+    slot.textContent = original
   }, 1500)
 }
 
@@ -1690,10 +1691,21 @@ function inviteUrl() {
   return viewHelpers.roomInviteLink(location.origin + location.pathname, hostedCode)
 }
 
+// Buttons pair a Font Awesome icon with a text span; label updates must
+// keep the icon, so they write the span instead of the button.
+function setLabel(button, text) {
+  let slot = button.querySelector('span')
+  if (!slot) {
+    slot = document.createElement('span')
+    button.append(slot)
+  }
+  slot.textContent = text
+}
+
 function hideQr() {
   qrBox.hidden = true
   qrBox.replaceChildren()
-  qrBtn.textContent = 'Show QR code'
+  setLabel(qrBtn, 'Show QR code')
 }
 
 // Phones join by scanning the invite link: no typing the room code.
@@ -1710,7 +1722,7 @@ qrBtn.addEventListener('click', () => {
   qrBox.replaceChildren()
   qrBox.insertAdjacentHTML('beforeend', code.createSvgTag({ cellSize: 6, margin: 0, scalable: true }))
   qrBox.hidden = false
-  qrBtn.textContent = 'Hide QR code'
+  setLabel(qrBtn, 'Hide QR code')
 })
 
 nick.addEventListener('keydown', (event) => {
@@ -1757,7 +1769,7 @@ restartBtn.addEventListener('click', () => {
 
 function paintMute() {
   const off = sfx.isMuted()
-  muteBtn.textContent = off ? 'Sound effects off' : 'Sound effects on'
+  setLabel(muteBtn, off ? 'Sound effects off' : 'Sound effects on')
   muteBtn.setAttribute('aria-pressed', String(!off))
 }
 
@@ -1769,7 +1781,7 @@ paintMute()
 
 function paintMusic() {
   const off = sfx.isMusicMuted()
-  musicBtn.textContent = off ? 'Music off' : 'Music on'
+  setLabel(musicBtn, off ? 'Music off' : 'Music on')
   musicBtn.setAttribute('aria-pressed', String(!off))
 }
 
@@ -1784,7 +1796,7 @@ paintMusic()
 // needs a tap, so the button only appears where it can work.
 function paintFull() {
   const on = Boolean(document.fullscreenElement)
-  fullBtn.textContent = on ? 'Exit full' : 'Full screen'
+  setLabel(fullBtn, on ? 'Exit full' : 'Full screen')
   fullBtn.setAttribute('aria-pressed', String(on))
 }
 

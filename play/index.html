@@ -12,6 +12,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <title>Neon Ground</title>
+  <link rel="stylesheet" href="../vendor/fontawesome/css/fontawesome.min.css">
+  <link rel="stylesheet" href="../vendor/fontawesome/css/solid.min.css">
 </head>
 <body>
   <canvas id="view"></canvas>
@@ -24,8 +26,8 @@
     <ol id="feed"></ol>
     <p id="status"></p>
     <div id="touch" hidden>
-      <button type="button" id="touch-left" aria-label="Turn left">&#9664;</button>
-      <button type="button" id="touch-right" aria-label="Turn right">&#9654;</button>
+      <button type="button" id="touch-left" aria-label="Turn left"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+      <button type="button" id="touch-right" aria-label="Turn right"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
     </div>
   </div>
   <div id="overlay">
@@ -60,31 +62,31 @@
       </ol>
       <div id="picker">
         <div id="pick-row">
-          <button type="button" id="pick-host">Host a session</button>
-          <button type="button" id="pick-join">Join a session</button>
+          <button type="button" id="pick-host"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i><span>Host a session</span></button>
+          <button type="button" id="pick-join"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Join a session</span></button>
         </div>
         <p id="pick-hint">Hosting creates a room code to share. Joining needs the host's code.</p>
       </div>
       <div id="host-setup" hidden>
         <label for="host-name">Your name</label>
         <input id="host-name" maxlength="16" autocomplete="off" placeholder="e.g. Alex">
-        <button type="button" id="host-room">Get a room code</button>
-        <button type="button" id="host-back" class="ghost">Back</button>
+        <button type="button" id="host-room"><i class="fa-solid fa-ticket" aria-hidden="true"></i><span>Get a room code</span></button>
+        <button type="button" id="host-back" class="ghost"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back</span></button>
       </div>
       <div id="join-setup" hidden>
         <label for="guest-name">Your name</label>
         <input id="guest-name" maxlength="16" autocomplete="off" placeholder="e.g. Alex">
         <label for="code">Room code</label>
         <input id="code" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE">
-        <button type="button" id="join-room">Join room</button>
-        <button type="button" id="scan-qr">Scan QR code</button>
+        <button type="button" id="join-room"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Join room</span></button>
+        <button type="button" id="scan-qr"><i class="fa-solid fa-camera" aria-hidden="true"></i><span>Scan QR code</span></button>
         <div id="scanner" hidden>
           <video id="scanner-video" playsinline muted></video>
           <canvas id="scanner-canvas" hidden></canvas>
           <p id="scanner-hint">Point the camera at the host's QR code.</p>
           <button type="button" id="scanner-stop" class="ghost">Cancel</button>
         </div>
-        <button type="button" id="join-back" class="ghost">Back</button>
+        <button type="button" id="join-back" class="ghost"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Back</span></button>
       </div>
       <div id="join-row" hidden>
         <label for="name">Name</label>
@@ -94,9 +96,9 @@
       <div id="room" hidden>
         <p id="room-code" hidden></p>
         <div id="invite-row" hidden>
-          <button type="button" id="copy-code">Copy code</button>
-          <button type="button" id="copy-link">Copy invite link</button>
-          <button type="button" id="show-qr">Show QR code</button>
+          <button type="button" id="copy-code"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>Copy code</span></button>
+          <button type="button" id="copy-link"><i class="fa-solid fa-link" aria-hidden="true"></i><span>Copy invite link</span></button>
+          <button type="button" id="show-qr"><i class="fa-solid fa-qrcode" aria-hidden="true"></i><span>Show QR code</span></button>
         </div>
         <div id="qr" hidden></div>
         <label id="nick-label" for="nick">Your name</label>
@@ -116,9 +118,9 @@
             <option value="normal" selected>Normal</option>
             <option value="hard">Hard</option>
           </select>
-          <button type="button" id="add-bot">Add bot</button>
+          <button type="button" id="add-bot"><i class="fa-solid fa-robot" aria-hidden="true"></i><span>Add bot</span></button>
         </div>
-        <button type="button" id="start">Start</button>
+        <button type="button" id="start"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start</span></button>
         <p id="waiting"></p>
       </div>
       <ol id="results" hidden></ol>
@@ -127,24 +129,24 @@
     </form>
   </div>
   <canvas id="fx"></canvas>
-  <button type="button" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menu">&#9776;</button>
+  <button type="button" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menu"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
   <div id="menu" hidden>
-    <button type="button" id="music">Music on</button>
-    <button type="button" id="full" hidden>Full screen</button>
-    <button type="button" id="mute">Sound effects on</button>
+    <button type="button" id="music"><i class="fa-solid fa-music" aria-hidden="true"></i><span>Music on</span></button>
+    <button type="button" id="full" hidden><i class="fa-solid fa-expand" aria-hidden="true"></i><span>Full screen</span></button>
+    <button type="button" id="mute"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span>Sound effects on</span></button>
     <label class="toggle" for="steer">
       <input id="steer" type="checkbox">
-      Steer with cursor
+      <i class="fa-solid fa-arrow-pointer" aria-hidden="true"></i><span>Steer with cursor</span>
     </label>
     <label class="toggle" for="show-fps">
       <input id="show-fps" type="checkbox">
-      Show FPS
+      <i class="fa-solid fa-gauge-high" aria-hidden="true"></i><span>Show FPS</span>
     </label>
     <label class="toggle" for="hide-mini">
       <input id="hide-mini" type="checkbox">
-      Hide mini map
+      <i class="fa-solid fa-map" aria-hidden="true"></i><span>Hide mini map</span>
     </label>
-    <button type="button" id="restart" hidden>Restart</button>
+    <button type="button" id="restart" hidden><i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span>Restart</span></button>
   </div>
   <!-- PeerJS and the QR generator stay classic scripts (vendored, no ESM builds); the app is one module. -->
   <script src="../peerjs.min.js"></script>
