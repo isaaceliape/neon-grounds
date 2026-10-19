@@ -112,6 +112,8 @@ const howto = document.querySelector('#howto')
 const muteBtn = document.querySelector('#mute')
 const musicBtn = document.querySelector('#music')
 const fullBtn = document.querySelector('#full')
+const menuBtn = document.querySelector('#menu-btn')
+const menu = document.querySelector('#menu')
 const touchPad = document.querySelector('#touch')
 
 // Installable web app: the service worker caches the shell after the first
@@ -1553,6 +1555,24 @@ if (
   fullBtn.hidden = false
   paintFull()
 }
+
+// Hamburger menu beside the mini-map: Music, Full screen, Sound.
+function setMenu(open) {
+  menu.hidden = !open
+  menuBtn.setAttribute('aria-expanded', String(open))
+}
+
+menuBtn.addEventListener('click', () => {
+  setMenu(menu.hidden)
+})
+document.addEventListener('pointerdown', (event) => {
+  if (menu.hidden) return
+  if (menu.contains(event.target) || menuBtn.contains(event.target)) return
+  setMenu(false)
+})
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !menu.hidden) setMenu(false)
+})
 
 const heldTurn = { left: false, right: false }
 

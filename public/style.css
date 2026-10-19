@@ -499,29 +499,47 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   80%, 100% { opacity: 0; transform: scale(2.2); }
 }
 
-/* sound toggle */
-#music,
-#mute,
-#full {
+/* top-right menu: music, full screen, and sound live under the hamburger
+   beside the mini-map */
+#menu-btn {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 30;
-  padding: 6px 12px;
-  font-size: 13px;
+  top: 16px;
+  right: 228px;
+  z-index: 32;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
 }
 
-#music {
-  bottom: 56px;
+#menu {
+  position: fixed;
+  top: 70px;
+  right: 228px;
+  z-index: 32;
+  margin: 0;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  background: rgba(8, 12, 22, 0.95);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 0 18px rgba(57, 255, 210, 0.25);
 }
 
-#full {
-  bottom: 96px;
+#menu[hidden] { display: none; }
+
+#menu button {
+  display: block;
+  width: 150px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  text-align: left;
 }
 
-#music[aria-pressed="false"],
-#mute[aria-pressed="false"],
-#full[aria-pressed="false"] {
+#menu button[aria-pressed="false"] {
   color: var(--muted);
   border-color: rgba(142, 160, 184, 0.5);
   box-shadow: none;
@@ -595,6 +613,8 @@ html { overscroll-behavior: none; }
   #board { top: 8px; left: 8px; min-width: 0; width: 128px; padding: 5px 7px; font-size: 12px; }
   #board li { gap: 6px; }
   #mini { top: 8px; right: 8px; width: 104px; height: 78px; }
+  #menu-btn { top: 8px; right: 120px; }
+  #menu { top: 60px; right: 120px; }
   #clock { top: 8px; font-size: 20px; padding: 4px 8px; }
   #clock.count { font-size: 56px; }
   #feed { top: 100px; right: 8px; width: 170px; }
@@ -617,8 +637,7 @@ html { overscroll-behavior: none; }
   #mini { top: 8px; right: 8px; width: 120px; height: 90px; }
   #clock { top: 8px; font-size: 22px; padding: 4px 10px; }
   #clock.count { font-size: 60px; }
-  #mute { bottom: auto; top: 106px; right: 8px; }
-  #music { bottom: auto; top: 146px; right: 8px; }
-  #full { bottom: auto; top: 186px; right: 8px; }
+  #menu-btn { top: 8px; right: 136px; }
+  #menu { top: 60px; right: 136px; }
   #feed { top: 186px; right: 8px; width: 190px; }
 }

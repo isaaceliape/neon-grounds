@@ -67,7 +67,7 @@ Hold the key to keep turning. If you never turn, you drive straight.
 
 Steer with the cursor: the snake curves toward the pointer. If the pointer is directly behind you, it turns sideways first.
 
-Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A Full screen button sits above the music toggle on phones and tablets that support it.
+Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A hamburger menu beside the mini-map holds Music, Sound, and (on phones and tablets that support it) Full screen.
 
 You start in the middle of a small square of your own color, aimed toward the middle of the map.
 
@@ -154,9 +154,9 @@ Effects: closing a loop flashes the taken ground and shows how much you took. A 
 
 ## Sound
 
-Short synthesized sounds play for captures, deaths, the countdown, GO, and the end of a round. There are no audio files. Browsers only allow sound after you click or press a key, so the first sound comes after that. The Sound on/off button, bottom right, mutes everything, and the choice is saved in this browser.
+Short synthesized sounds play for captures, deaths, the countdown, GO, and the end of a round. The effects need no audio files; only the theme song ships as one (`public/theme.mp3`). Browsers only allow sound after you click or press a key, so the first sound comes after that. The hamburger menu beside the mini-map holds the Sound on/off toggle, which mutes everything, and the choice is saved in this browser.
 
-A looping theme starts once you join and keeps playing behind the round: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free for use under the Pixabay Content License). It plays from a decoded buffer loop, so the loop point is seamless, and the synth loop covers the download and stays as fallback if the track cannot load. Effects momentarily duck the theme instead of shouting over it, and a limiter keeps the loudest pile-ups from distorting. The Music on/off button above it silences just the theme; Sound mutes everything. Both choices are saved in this browser. Retune it in `public/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
+A looping theme starts once you join and keeps playing behind the round: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free for use under the Pixabay Content License). It plays from a decoded buffer loop, so the loop point is seamless, and the synth loop covers the download and stays as fallback if the track cannot load. Effects momentarily duck the theme instead of shouting over it, and a limiter keeps the loudest pile-ups from distorting. The menu's Music toggle silences just the theme; Sound mutes everything. Both choices are saved in this browser. Retune it in `public/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
 
 ## Wins this session
 
