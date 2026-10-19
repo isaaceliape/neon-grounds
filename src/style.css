@@ -38,9 +38,9 @@ html, body {
    for less motion. */
 #bg-blobs { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
 #bg-blobs i { position: absolute; width: 62vmax; height: 62vmax; filter: blur(60px); opacity: 0.42; }
-#bg-blobs .b1 { background: radial-gradient(circle, var(--n1), transparent 55%); top: -18%; left: -14%; animation: morph1 8s ease-in-out infinite; }
-#bg-blobs .b2 { background: radial-gradient(circle, var(--n4), transparent 55%); bottom: -20%; right: -12%; animation: morph2 10s ease-in-out infinite; }
-#bg-blobs .b3 { background: radial-gradient(circle, var(--glow), transparent 55%); top: 30%; left: 55%; width: 46vmax; height: 46vmax; opacity: 0.32; animation: morph3 7s ease-in-out infinite; }
+#bg-blobs .b1 { background: radial-gradient(circle, var(--n1), transparent 55%); top: -18%; left: -14%; animation: morph1 4s ease-in-out infinite; }
+#bg-blobs .b2 { background: radial-gradient(circle, var(--n4), transparent 55%); bottom: -20%; right: -12%; animation: morph2 5s ease-in-out infinite; }
+#bg-blobs .b3 { background: radial-gradient(circle, var(--glow), transparent 55%); top: 30%; left: 55%; width: 46vmax; height: 46vmax; opacity: 0.32; animation: morph3 3.5s ease-in-out infinite; }
 @keyframes morph1 {
   0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 42% 58% 63% 37% / 45% 42% 58% 55%; opacity: 0.34; }
   50% { transform: translate(14vw, 10vh) scale(1.32) rotate(55deg); border-radius: 63% 37% 41% 59% / 55% 63% 37% 45%; opacity: 0.5; }
