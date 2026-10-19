@@ -976,9 +976,7 @@ function renderShare(show) {
     label.textContent = 'Room code: '
     const code = document.createElement('strong')
     code.textContent = hostedCode
-    const hint = document.createElement('span')
-    hint.textContent = ' — share the code or the invite link below.'
-    roomCodeEl.append(label, code, hint)
+    roomCodeEl.append(label, code)
     roomCodeEl.hidden = false
     inviteRow.hidden = false
     return
