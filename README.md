@@ -1,6 +1,9 @@
 # Neon Grounds
 
-**[▶ Play now!](https://isaaceliape.github.io/neon-grounds/play/) — free, no ads, no signup, nothing to install.**
+<p align="center">
+  <b><a href="https://isaaceliape.github.io/neon-grounds/play/">▶&nbsp;Play now!</a></b><br>
+  <i>free · no ads · no signup · nothing to install</i>
+</p>
 
 Steal ground, cut lines, and snake your way to the biggest patch of neon on the map. Neon Grounds is a fast multiplayer turf war for up to 12 players that runs entirely in the browser — on your phone on the couch, or on a laptop across the internet.
 
