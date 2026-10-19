@@ -5,6 +5,9 @@
   --muted: #8ea0b8;
   --line: rgba(0, 245, 212, 0.45);
   --glow: #39ffd2;
+  --n1: #ff4fd8;
+  --n3: #c8ff3e;
+  --n4: #a06bff;
   --radius: 14px;
 }
 
@@ -146,8 +149,11 @@ h1 {
   font-size: 42px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--glow);
-  text-shadow: 0 0 10px var(--glow), 0 0 28px #14b8ff;
+  background: linear-gradient(100deg, var(--n1), var(--n4) 45%, var(--glow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 #blurb, #waiting, #error, #link-note {
@@ -187,7 +193,7 @@ button.ghost { background: transparent; border-color: var(--line); color: var(--
 #scanner-video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; background: #000; }
 #scanner-hint { margin: 0; color: var(--muted); font-size: 14px; }
 
-#room-code strong { font-size: 28px; letter-spacing: 0.3em; color: var(--glow); text-shadow: 0 0 12px rgba(57, 255, 210, 0.7); }
+#room-code strong { font-size: 28px; letter-spacing: 0.3em; color: var(--n1); text-shadow: 0 0 12px rgba(255, 79, 216, 0.7); }
 
 #room-code:empty, #pick-hint:empty { display: none; }
 
@@ -234,6 +240,19 @@ button:disabled {
   border-color: rgba(142, 160, 184, 0.4);
   box-shadow: none;
   cursor: default;
+}
+
+/* Card actions wear the pink-to-violet gradient; ghost and menu buttons
+   stay quiet, and the touch buttons get their own lime below. */
+#card button:not(.ghost):not(:disabled) {
+  background: linear-gradient(100deg, var(--n1), var(--n4));
+  border-color: transparent;
+  color: #2b0620;
+  box-shadow: 0 0 16px rgba(255, 79, 216, 0.45);
+}
+#card button:not(.ghost):not(:disabled):hover {
+  background: linear-gradient(100deg, var(--n1), var(--n4));
+  box-shadow: 0 0 26px rgba(255, 79, 216, 0.7);
 }
 
 .share-url {
@@ -286,8 +305,8 @@ button:disabled {
 h1 { animation: title-glow 3.2s ease-in-out infinite; }
 
 @keyframes title-glow {
-  0%, 100% { text-shadow: 0 0 10px var(--glow), 0 0 28px #14b8ff; }
-  50% { text-shadow: 0 0 16px var(--glow), 0 0 46px #14b8ff, 0 0 70px rgba(20, 184, 255, 0.5); }
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 79, 216, 0.55)); }
+  50% { filter: drop-shadow(0 0 16px rgba(255, 79, 216, 0.85)); }
 }
 
 button { transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease; }
@@ -521,6 +540,9 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   padding: 0;
   font-size: 22px;
   line-height: 1;
+  border-color: var(--n4);
+  color: var(--n4);
+  box-shadow: 0 0 12px rgba(160, 107, 255, 0.45);
 }
 
 #menu {
@@ -640,20 +662,20 @@ html { overscroll-behavior: none; }
     width: min(38vw, 160px);
     height: 96px;
     font-size: 34px;
-    color: var(--glow);
-    background: rgba(7, 20, 15, 0.55);
-    border: 2px solid var(--glow);
+    color: var(--n3);
+    background: rgba(30, 40, 8, 0.55);
+    border: 2px solid var(--n3);
     border-radius: 22px;
-    box-shadow: 0 0 18px rgba(57, 255, 210, 0.35);
+    box-shadow: 0 0 18px rgba(200, 255, 62, 0.35);
     -webkit-tap-highlight-color: transparent;
     touch-action: none;
     transition: background 0.08s ease, transform 0.08s ease, box-shadow 0.08s ease;
   }
 
   #touch button.down {
-    background: rgba(57, 255, 210, 0.35);
+    background: rgba(200, 255, 62, 0.35);
     transform: scale(0.95);
-    box-shadow: 0 0 30px rgba(57, 255, 210, 0.8);
+    box-shadow: 0 0 30px rgba(200, 255, 62, 0.8);
   }
 }
 
