@@ -85,6 +85,8 @@ A line that only runs across someone else's land, and never closes, takes nothin
 
 If the loop wraps part of their land, you take only that inside part, plus the squares your line covered. The rest of their land stays theirs. They are knocked out only if their head is inside the part you took.
 
+If two loops close on the same tick and cover the same ground, the shared part goes to whoever closed first. The later loop keeps everything else it took.
+
 You do not fill old holes in your land just by closing a new loop somewhere else.
 
 ## How you go out
@@ -129,7 +131,7 @@ The host adds up to three bots from the waiting room, each with its own level. A
 
 It drives out from the middle of its land, then curves so the line does not cross itself. It looks along the turn it is about to make and rejects a heading that would hit its own older line, someone else's line, or the edge. Once the line is long, it heads back toward its own land if that way is clear. If the way home is blocked, it keeps turning.
 
-Every level plays by the same capture and death rules as everyone else. The levels are plain numbers at the top of `server/game.js` (`BOT_LEVELS`), so tuning one is a one-line change.
+Every level plays by the same capture rules as everyone else. Deaths work the same too, with one exception: a bot that would hit the edge of the map bounces back instead of going out. The levels are plain numbers at the top of `server/game.js` (`BOT_LEVELS`), so tuning one is a one-line change.
 
 ## What you see
 
@@ -170,6 +172,8 @@ Your snake freezes for 10 seconds. Reopen the same tab in that time and you keep
 
 After 10 seconds in the waiting room, the seat is removed. After 10 seconds during a round, you die, the line goes away, and your land stays.
 
+In an online room there is one more case: if the host's tab closes for good, the lowest-id player still connected takes over as host under the same room code, with seats kept (see Online rooms above).
+
 ## Logs
 
 When a round ends, the server prints the result and appends it to `logs/results.log`.
@@ -178,7 +182,7 @@ When a round ends, the server prints the result and appends it to `logs/results.
 Winner: Isaac
 Isaac won with 18.2%
 Jonny lost with 6.4%, cut by Isaac
-Bot lost with 9.1%, hit the wall
+Bot lost with 9.1%, cut by Isaac
 ```
 
 A player who is still alive but has less land is logged as lost with less territory. A tie is logged as Draw.
