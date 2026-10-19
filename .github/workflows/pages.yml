@@ -21,16 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 'lts/*'
-          cache: npm
+          bun-version: latest
       - name: Install and test
         run: |
-          npm ci
-          npm test
+          bun install --frozen-lockfile
+          bun test
       - name: Build the site
-        run: npm run build
+        run: bun run build
       - name: Stamp the service-worker cache
         run: |
           # Stamp the built worker with this commit so every deploy busts

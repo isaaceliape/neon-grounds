@@ -386,7 +386,7 @@ if (isMain) {
   const serveDir = process.env.DIR || distDir
   const probe = await stat(serveDir).catch(() => null)
   if (!probe?.isDirectory()) {
-    console.error(`Nothing to serve at ${serveDir}. Run npm run build first. (Tests and Vite dev do not need this.)`)
+    console.error(`Nothing to serve at ${serveDir}. Run bun run build first. (Tests and Vite dev do not need this.)`)
     process.exit(1)
   }
   const port = Number(process.env.PORT) || 4173

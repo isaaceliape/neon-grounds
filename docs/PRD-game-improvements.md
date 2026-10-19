@@ -280,7 +280,7 @@ Order within Phase 1: F9, F10, F2, F3, F4. F10 comes before the others so later 
 
 ## 6. Test plan
 
-- **Automated:** `npm test` must stay green. New unit tests for F1, new server tests for F8, new vm-based test for F10.
+- **Automated:** `bun test` must stay green. New unit tests for F1, new server tests for F8, new vm-based test for F10.
 - **Manual in the browser (chrome-devtools MCP):** one pass per feature using the acceptance criteria above. Use a second client (a small `ws` script) as an opponent, and run it on a separate port so a live game is not disturbed. Restore `logs/results.log` after test rounds.
 - **Mobile:** Chrome device emulation with touch for F7 at 360x640 and landscape.
 - **Regression:** replay the capture scenarios (return home, self-cross, enclose head) to confirm no rule changes.
@@ -309,4 +309,4 @@ Order within Phase 1: F9, F10, F2, F3, F4. F10 comes before the others so later 
 - No console errors or issues on load.
 - Every death shows up in the kill feed with the right reason.
 - A phone on the same network can join and finish a round with touch only.
-- `npm test` passes, with new tests for F1, F8, and F10.
+- `bun test` passes, with new tests for F1, F8, and F10.
