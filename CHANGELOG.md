@@ -3,6 +3,12 @@
 Versions are stamped into both pages at build time (bottom-right badge)
 from `package.json`. Bump the version there and add an entry here.
 
+## 1.0.2
+
+- Rocket Clouds DEMO logo with CSS-Tricks neon halo and flicker.
+- Grounds in solid primary blue; HUD names slide vertically.
+- Adaptive quality governor holds 30fps on weak hardware.
+
 ## 1.0.1
 
 - Drop the synthesized theme: the licensed track is the only music.
