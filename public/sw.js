@@ -2,21 +2,19 @@
 // or WebRTC room), but the page, art, and code load from cache after the
 // first visit, which is also what makes the app installable.
 // Bump CACHE on release so updates replace the old shell.
-const CACHE = 'territory-v3'
+const CACHE = 'territory-v4'
+// Vite build output: flat stable names (see vite.config.js). The app
+// scripts bundle into index.js (+host-session.js chunk), the styles
+// into index.css; the rest below ships verbatim from public/.
 const SHELL = [
   './',
   'index.html',
   'manifest.webmanifest',
-  'client.js',
-  'fx.js',
-  'game.js',
+  'index.js',
+  'index.css',
   'host-session.js',
-  'p2p.js',
   'peerjs.min.js',
-  'sfx.js',
-  'style.css',
   'theme.mp3',
-  'view-helpers.js',
   'icon-192.png',
   'icon-512.png',
   'maskable-512.png',

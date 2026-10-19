@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
 import WebSocket from 'ws'
 import { startServer } from '../server/index.js'
 
@@ -102,7 +103,10 @@ test('a visitor keeps the join form while a round is running', async () => {
 })
 
 test('the page is served from the same port', async () => {
-  const server = await startServer()
+  // The static dir is the built site in production; here the repo root
+  // proves same-port serving without needing a build first.
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+  const server = await startServer({ dir: root })
   try {
     const response = await fetch(`http://127.0.0.1:${server.port}/`)
     assert.equal(response.status, 200)

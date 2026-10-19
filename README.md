@@ -12,10 +12,12 @@ From this folder:
 
 ```
 npm install
-npm start
+npm run dev
 ```
 
-The server listens on port 4173. Open http://localhost:4173 on this machine. Anyone else on the same network or VPN opens one of the addresses printed in the terminal. The waiting room lists those addresses too.
+Vite serves the game with hot reload on port 4174: edits to styles and scripts refresh the page live, with no manual rebuild. Open http://localhost:4174 on this machine.
+
+`npm run build` bundles and minifies everything into `dist/` (stable file names, so the service worker shell list never churns). `npm start` serves that production bundle on port 4173 — that is also the path that runs the local WebSocket server, so add `?local` to the URL to play against Node instead of peer to peer. Anyone else on the same network or VPN opens one of the addresses printed in the terminal. The waiting room lists those addresses too.
 
 If the Mac asks whether Node may accept incoming connections, allow it. Set `PORT` to use a different port.
 
@@ -29,7 +31,7 @@ The host's browser runs the round, peer to peer over WebRTC. If the host's tab c
 
 Online rooms need internet access to reach the free PeerJS signaling server that introduces the players. After that introduction, game traffic flows directly between browsers. Win counts last for the tab session, and rounds are not written to `logs/results.log` (there is no server to write it).
 
-The static files in `public/` plus a copy of `server/game.js` as `game.js` are all a host needs. Pushing to `main` deploys them to GitHub Pages automatically (see `.github/workflows/pages.yml`); enable Pages in the repo settings with the workflow source and share that URL instead of a VPN address.
+The app sources live in `src/` as ES modules, the sim in `server/game.js` (shared by the browser host and the Node server), and `public/` holds only files that ship verbatim: icons, the manifest, the vendored PeerJS client, the theme song, and the service worker. Pushing to `main` runs the tests, builds the bundle, and deploys `dist/` to GitHub Pages automatically (see `.github/workflows/pages.yml`); enable Pages in the repo settings with the workflow source and share that URL instead of a VPN address.
 
 ## Joining
 
@@ -153,9 +155,9 @@ Effects: closing a loop flashes the taken ground and shows how much you took. A 
 
 ## Sound
 
-Short synthesized sounds play for captures, deaths, the countdown, GO, and the end of a round. The effects need no audio files; only the theme song ships as one (`public/theme.mp3`). Browsers only allow sound after you click or press a key, so the first sound comes after that. The hamburger menu beside the mini-map holds the Sound on/off toggle, which mutes everything, and the choice is saved in this browser.
+Short synthesized sounds play for captures, deaths, the countdown, GO, and the end of a round. The effects need no audio files; only the theme song ships as one (`public/theme.mp3`). Browsers only allow sound after you click or press a key, so the first sound comes after that. The hamburger menu beside the mini-map holds the Sound effects on/off toggle, which mutes everything, and the choice is saved in this browser.
 
-A looping theme starts once you join and keeps playing behind the round: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free for use under the Pixabay Content License). It plays from a decoded buffer loop, so the loop point is seamless, and the synth loop covers the download and stays as fallback if the track cannot load. Effects momentarily duck the theme instead of shouting over it, and a limiter keeps the loudest pile-ups from distorting. The menu's Music toggle silences just the theme; Sound mutes everything. Both choices are saved in this browser. Retune it in `public/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
+A looping theme starts once you join and keeps playing behind the round: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free for use under the Pixabay Content License). It plays from a decoded buffer loop, so the loop point is seamless, and the synth loop covers the download and stays as fallback if the track cannot load. Effects momentarily duck the theme instead of shouting over it, and a limiter keeps the loudest pile-ups from distorting. The menu's Music toggle silences just the theme; Sound mutes everything. Both choices are saved in this browser. Retune it in `src/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
 
 ## Wins this session
 

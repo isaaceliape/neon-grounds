@@ -1,6 +1,8 @@
 // Visual effects for the board. Everything here is cosmetic and client side.
 // World positions are in map cells, screen positions are in CSS pixels.
-const fx = (() => {
+// A module export: client.js is an ES module under Vite, so the old
+// classic-script global is imported explicitly instead.
+export const fx = (() => {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const MAX_PARTICLES = 900
   const screen = document.querySelector('#fx')

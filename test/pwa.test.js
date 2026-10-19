@@ -4,6 +4,8 @@ import test from 'node:test'
 import vm from 'node:vm'
 
 const pub = (name) => new URL(`../public/${name}`, import.meta.url)
+const atRoot = (name) => new URL(`../${name}`, import.meta.url)
+const inSrc = (name) => new URL(`../src/${name}`, import.meta.url)
 const read = (name) => readFileSync(pub(name), 'utf8')
 
 test('the manifest describes an installable app with real icons', () => {
@@ -25,18 +27,18 @@ test('the manifest describes an installable app with real icons', () => {
 })
 
 test('the page links the manifest and registers the service worker', () => {
-  const html = read('index.html')
+  const html = readFileSync(atRoot('index.html'), 'utf8')
   assert.ok(html.includes('rel="manifest"'), 'manifest linked')
   assert.ok(html.includes('apple-touch-icon'), 'iOS home-screen icon linked')
   assert.ok(html.includes('theme-color'), 'theme color set')
-  const client = read('client.js')
+  const client = readFileSync(inSrc('client.js'), 'utf8')
   assert.ok(client.includes("register('sw.js')"), 'service worker registered')
 })
 
 test('the service worker parses and caches the app shell', () => {
   const source = read('sw.js')
   assert.doesNotThrow(() => new vm.Script(source), 'sw.js is valid syntax')
-  for (const file of ['index.html', 'client.js', 'style.css', 'manifest.webmanifest', 'icon-512.png']) {
+  for (const file of ['index.html', 'index.js', 'index.css', 'host-session.js', 'manifest.webmanifest', 'icon-512.png']) {
     assert.ok(source.includes(file), `shell caches ${file}`)
   }
 })
@@ -56,4 +58,20 @@ test('every deploy busts the service-worker cache', () => {
   const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8')
   assert.ok(workflow.includes('rev-parse --short HEAD'), 'deploy stamps the cache with the commit')
   assert.ok(workflow.includes("const CACHE = 'territory-"), 'deploy rewrites the versioned cache name')
+})
+
+test('the shell list matches the Vite build output', () => {
+  const config = readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8')
+  assert.ok(config.includes("entryFileNames: '[name].js'"), 'bundles keep stable names')
+  assert.ok(config.includes("chunkFileNames: '[name].js'"), 'chunks keep stable names')
+  assert.ok(config.includes("assetFileNames: '[name][extname]'"), 'assets keep stable names')
+  const worker = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
+  const shell = [...worker.matchAll(/'([^']+\.(?:js|css))'/g)].map((match) => match[1])
+  assert.ok(shell.length > 0, 'shell lists bundles')
+  for (const file of shell) {
+    assert.ok(
+      ['index.js', 'index.css', 'host-session.js', 'peerjs.min.js'].includes(file),
+      `${file} is a real build output or vendored file`,
+    )
+  }
 })

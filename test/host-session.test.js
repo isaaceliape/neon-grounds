@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createHostSession, LOCAL_KEY } from '../public/host-session.js'
+import { createHostSession, LOCAL_KEY } from '../src/host-session.js'
 
 // Drives the in-browser room server headlessly: the host plays through the
 // local loopback key, one guest arrives over a (fake) DataChannel.
@@ -112,7 +112,7 @@ test('a dropped guest keeps their seat briefly and can rejoin with the token', a
 })
 
 test('takeover: migrate snapshots restore a room and keep seats', async () => {
-  const { createHostSession } = await import('../public/host-session.js')
+  const { createHostSession } = await import('../src/host-session.js')
   const first = makeRoom()
   try {
     first.session.guestMessage(LOCAL_KEY, { type: 'join', name: 'Host', token: '' })

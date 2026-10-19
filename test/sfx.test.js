@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import vm from 'node:vm'
 
-const source = readFileSync(new URL('../public/sfx.js', import.meta.url), 'utf8')
+const source = readFileSync(new URL('../src/sfx.js', import.meta.url), 'utf8')
 
 // Minimal stand-ins for the Web Audio API that count what the code does.
 function makeEnv({ stored = null, musicStored = null, withAudio = true, trackAudio = false } = {}) {

@@ -12,7 +12,6 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <title>Territory</title>
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <canvas id="view"></canvas>
@@ -133,11 +132,8 @@
     </label>
     <button type="button" id="restart" hidden>Restart</button>
   </div>
-  <script src="view-helpers.js"></script>
+  <!-- PeerJS stays a classic script (vendored, no ESM build); the app is one module. -->
   <script src="peerjs.min.js"></script>
-  <script src="p2p.js"></script>
-  <script src="sfx.js"></script>
-  <script src="fx.js"></script>
-  <script src="client.js"></script>
+  <script type="module" src="/src/client.js"></script>
 </body>
 </html>

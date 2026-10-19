@@ -5,7 +5,7 @@ import vm from 'node:vm'
 
 // The helpers are a classic browser script. Run it in a VM and read the global it sets.
 function loadHelpers() {
-  const source = readFileSync(new URL('../public/view-helpers.js', import.meta.url), 'utf8')
+  const source = readFileSync(new URL('../src/view-helpers.js', import.meta.url), 'utf8')
   const sandbox = {}
   sandbox.globalThis = sandbox
   vm.runInNewContext(source, sandbox)

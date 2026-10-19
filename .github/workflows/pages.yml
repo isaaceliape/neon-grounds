@@ -21,15 +21,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Assemble site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: npm
+      - name: Install and test
         run: |
-          mkdir -p dist
-          cp public/client.js public/fx.js public/index.html public/host-session.js public/p2p.js public/peerjs.min.js public/sfx.js public/style.css public/view-helpers.js dist/
-          cp public/manifest.webmanifest public/sw.js public/icon.svg public/icon-192.png public/icon-512.png public/maskable-512.png public/apple-touch-icon.png public/theme.mp3 dist/
-          # host-session.js imports ./game.js; ship the single server copy next to it.
-          cp server/game.js dist/game.js
-          # Stamp the service-worker cache with this commit so every deploy
-          # busts the old shell: the worker installs the fresh files, deletes
+          npm ci
+          npm test
+      - name: Build the site
+        run: npm run build
+      - name: Stamp the service-worker cache
+        run: |
+          # Stamp the built worker with this commit so every deploy busts
+          # the old shell: the worker installs the fresh files, deletes
           # older territory-* caches on activate, and takes over open tabs.
           ver="territory-$(git rev-parse --short HEAD)"
           sed -i "s/const CACHE = 'territory-v[0-9][0-9]*'/const CACHE = '${ver}'/" dist/sw.js

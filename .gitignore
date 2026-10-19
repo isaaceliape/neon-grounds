@@ -1,1 +1,11 @@
 node_modules/
+dist/
+# A Unity project lives alongside this folder; none of it belongs in git.
+Library/
+Packages/
+ProjectSettings/
+UserSettings/
+Temp/
+Logs/
+*.csproj
+*.sln

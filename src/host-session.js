@@ -1,13 +1,6 @@
-// Single source of truth for the sim is server/game.js. Browsers load it
-// as ./game.js (the dev server maps /game.js to it; the Pages deploy
-// copies it next to this file), while Node tests resolve the file directly.
-let gameModule
-try {
-  gameModule = await import('./game.js')
-} catch {
-  gameModule = await import('../server/game.js')
-}
-const { createGame } = gameModule
+// Single source of truth for the sim is server/game.js, resolved relative
+// to this file both in Node and in the Vite bundle.
+import { createGame } from '../server/game.js'
 
 // The room server, running in the host player's browser. This is a port of
 // server/index.js's room logic (same message shapes, same rules), with the

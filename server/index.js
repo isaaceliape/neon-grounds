@@ -1,16 +1,15 @@
 import { randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
-import { appendFile, mkdir, readFile } from 'node:fs/promises'
+import { appendFile, mkdir, readFile, stat } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { WebSocketServer } from 'ws'
 import { createGame } from './game.js'
 
-const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public')
-const serverDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)))
-const gameFile = path.resolve(serverDir, 'game.js')
-const defaultResultsLog = path.resolve(publicDir, '../logs/results.log')
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const distDir = path.resolve(rootDir, 'dist')
+const defaultResultsLog = path.resolve(rootDir, 'logs/results.log')
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -66,7 +65,7 @@ function delta(game, msg) {
   }
 }
 
-export function startServer({ port = 0, log = false, gameOptions = {}, resultsLog = defaultResultsLog } = {}) {
+export function startServer({ port = 0, log = false, gameOptions = {}, resultsLog = defaultResultsLog, dir = distDir } = {}) {
   const game = createGame(gameOptions)
   let closing = false
   const tokens = new Map()
@@ -81,10 +80,8 @@ export function startServer({ port = 0, log = false, gameOptions = {}, resultsLo
     try {
       const url = new URL(req.url ?? '/', 'http://localhost')
       const requested = decodeURIComponent(url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\/+/, ''))
-      // host-session.js (ES module, runs the sim in the host's browser)
-      // imports ./game.js, so serve the single server-side copy at /game.js.
-      const file = requested === 'game.js' ? gameFile : path.resolve(publicDir, requested)
-      if (file !== publicDir && file !== gameFile && !file.startsWith(`${publicDir}${path.sep}`)) {
+      const file = path.resolve(dir, requested)
+      if (file !== dir && !file.startsWith(`${dir}${path.sep}`)) {
         res.writeHead(403).end()
         return
       }
@@ -383,8 +380,14 @@ export function startServer({ port = 0, log = false, gameOptions = {}, resultsLo
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
 if (isMain) {
+  const serveDir = process.env.DIR || distDir
+  const probe = await stat(serveDir).catch(() => null)
+  if (!probe?.isDirectory()) {
+    console.error(`Nothing to serve at ${serveDir}. Run npm run build first. (Tests and Vite dev do not need this.)`)
+    process.exit(1)
+  }
   const port = Number(process.env.PORT) || 4173
-  startServer({ port, log: true }).catch((error) => {
+  startServer({ port, log: true, dir: serveDir }).catch((error) => {
     if (error?.code === 'EADDRINUSE') console.error(`Port ${port} is already in use.`)
     else console.error(error)
     process.exit(1)

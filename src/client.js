@@ -1,3 +1,11 @@
+// ES module entry (Vite): styles come through the bundler so dev edits
+// hot-reload, and the helper scripts below run for their globals.
+import './style.css'
+import './view-helpers.js'
+import './sfx.js'
+import './p2p.js'
+import { fx } from './fx.js'
+
 const view = document.querySelector('#view')
 const hud = document.querySelector('#hud')
 const board = document.querySelector('#board')
