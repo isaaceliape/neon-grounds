@@ -36,7 +36,7 @@ html, body {
    board but below the HUD and the card, and switch off the moment a round
    starts, so gameplay never pays for them. Static when the system asks
    for less motion. */
-#bg-blobs { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+#bg-blobs { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; transition: opacity 0.8s ease; }
 #bg-blobs i { position: absolute; width: 62vmax; height: 62vmax; filter: blur(60px); opacity: 0.42; }
 #bg-blobs .b1 { background: radial-gradient(circle, var(--n1), transparent 55%); top: -18%; left: -14%; animation: morph1 4s ease-in-out infinite; }
 #bg-blobs .b2 { background: radial-gradient(circle, var(--n4), transparent 55%); bottom: -20%; right: -12%; animation: morph2 5s ease-in-out infinite; }
@@ -56,7 +56,7 @@ html, body {
   50% { transform: translate(-10vw, 8vh) scale(1.25); border-radius: 45% 55% 48% 52% / 52% 48% 55% 45%; opacity: 0.4; }
   100% { transform: translate(8vw, -7vh) scale(1); border-radius: 55% 45% 52% 48% / 48% 52% 45% 55%; opacity: 0.26; }
 }
-body:has(#overlay[hidden]) #bg-blobs { display: none; }
+body:has(#overlay[hidden]) #bg-blobs { opacity: 0.45; }
 @media (prefers-reduced-motion: reduce) {
   #bg-blobs i { animation: none; }
 }
