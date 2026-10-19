@@ -1,4 +1,4 @@
-// Small synthesized sound effects. No audio files.
+// Synthesized sound effects plus the licensed MP3 theme loop (theme.mp3).
 // The AudioContext is created only after the first click or key press, because
 // browsers block audio before a gesture. If Web Audio is missing, every call is a no-op.
 globalThis.sfx = (() => {
@@ -188,158 +188,27 @@ globalThis.sfx = (() => {
     globalThis.addEventListener?.(type, unlock, { passive: true })
   }
 
-  // Looping background theme. 32 eighth-note steps (~8.3s per loop at 116bpm)
-  // over Am F C G. 0 means rest. Gains stay low so this sits under the effects.
-  // Retune it here: swap the frequencies, keep the 32-step shape. The drums
-  // follow the steps (kick 0/4, snare 2/6 of each bar), the pad holds the
-  // bar chord, and the arp plucks it an octave up in the lead's gaps.
-  const MUSIC_BPM = 116
-  const MUSIC_STEP = 60 / MUSIC_BPM / 2
-  const MUSIC_LEAD = [
-    440, 0, 523.25, 0, 659.25, 0, 523.25, 0,
-    440, 0, 392, 0, 349.23, 0, 329.63, 0,
-    523.25, 0, 659.25, 0, 587.33, 0, 523.25, 0,
-    587.33, 0, 493.88, 0, 392, 0, 493.88, 0,
-  ]
-  const MUSIC_BASS = [
-    110, 0, 0, 0, 110, 0, 0, 0,
-    87.31, 0, 0, 0, 87.31, 0, 0, 0,
-    130.81, 0, 0, 0, 130.81, 0, 0, 0,
-    98, 0, 0, 0, 98, 0, 0, 0,
-  ]
-  // One chord per bar for the pad: Am, F, C (G C E), G.
-  const MUSIC_CHORDS = [
-    [220, 261.63, 329.63],
-    [174.61, 220, 261.63],
-    [196, 261.63, 329.63],
-    [196, 246.94, 293.66],
-  ]
-  // Arp order through the bar chord: root, third, fifth, third.
-  const MUSIC_ARP = [0, 1, 2, 1]
-
-  let playing = false
-  let musicTimer = null
-  let nextTime = 0
-  let stepIdx = 0
-
-  // One theme note at an absolute context time, on the music bus.
-  // slideTo bends the pitch down (or up) across the note: the kick uses it.
-  function musicTone(freq, when, length, { type = 'sine', gain = 0.1, slideTo = 0 } = {}) {
-    if (!ctx || muted || musicMuted) return
-    const osc = ctx.createOscillator()
-    const amp = ctx.createGain()
-    osc.type = type
-    osc.frequency.setValueAtTime(freq, when)
-    if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, when + length)
-    amp.gain.setValueAtTime(0.0001, when)
-    amp.gain.exponentialRampToValueAtTime(gain, when + 0.02)
-    amp.gain.exponentialRampToValueAtTime(0.0001, when + length)
-    osc.connect(amp)
-    amp.connect(music)
-    osc.start(when)
-    osc.stop(when + length + 0.03)
-  }
-
-  // Shared white-noise buffer so the snare (and any future shaker) costs
-  // one allocation no matter how long the loop runs.
-  let noiseBuffer = null
-  function getNoiseBuffer() {
-    if (noiseBuffer || !ctx || typeof ctx.createBuffer !== 'function') return noiseBuffer
-    const frames = Math.max(1, Math.floor(ctx.sampleRate * 0.25))
-    noiseBuffer = ctx.createBuffer(1, frames, ctx.sampleRate)
-    const data = noiseBuffer.getChannelData(0)
-    for (let i = 0; i < frames; i += 1) data[i] = Math.random() * 2 - 1
-    return noiseBuffer
-  }
-
-  // One filtered noise hit at an absolute context time, on the music bus.
-  function musicNoise(when, length, { gain = 0.1, freq = 1800, type = 'highpass' } = {}) {
-    if (!ctx || muted || musicMuted) return
-    if (typeof ctx.createBufferSource !== 'function' || typeof ctx.createBiquadFilter !== 'function') return
-    const buffer = getNoiseBuffer()
-    if (!buffer) return
-    const src = ctx.createBufferSource()
-    src.buffer = buffer
-    const filter = ctx.createBiquadFilter()
-    filter.type = type
-    filter.frequency.setValueAtTime(freq, when)
-    const amp = ctx.createGain()
-    amp.gain.setValueAtTime(0.0001, when)
-    amp.gain.exponentialRampToValueAtTime(gain, when + 0.01)
-    amp.gain.exponentialRampToValueAtTime(0.0001, when + length)
-    src.connect(filter)
-    filter.connect(amp)
-    amp.connect(music)
-    src.start(when)
-    if (typeof src.stop === 'function') src.stop(when + length + 0.03)
-  }
-
-  function playStep(i, when) {
-    const chord = MUSIC_CHORDS[(i >> 3) % MUSIC_CHORDS.length]
-    const lead = MUSIC_LEAD[i]
-    if (lead) {
-      musicTone(lead, when, 0.22, { type: 'square', gain: 0.09 })
-    } else {
-      const pluck = chord[MUSIC_ARP[(i >> 1) % MUSIC_ARP.length]] * 2
-      musicTone(pluck, when, 0.11, { type: 'triangle', gain: 0.05 })
-    }
-    const bass = MUSIC_BASS[i]
-    if (bass) musicTone(bass, when, 0.24, { type: 'triangle', gain: 0.2 })
-    const beat = i % 8
-    if (beat === 0 || beat === 4) musicTone(150, when, 0.12, { type: 'sine', gain: 0.22, slideTo: 45 })
-    if (beat === 2 || beat === 6) musicNoise(when, 0.09, { gain: 0.09, freq: 1800 })
-    if (beat === 0) {
-      for (const freq of chord) musicTone(freq, when, MUSIC_STEP * 8, { type: 'sine', gain: 0.03 })
-    }
-    if (i % 2 === 1) {
-      const open = beat === 7
-      musicTone(8000, when, open ? 0.09 : 0.03, { type: 'sine', gain: open ? 0.05 : 0.035 })
-    }
-  }
-
-  // Schedule notes ~0.6s ahead so the loop holds steady under load.
-  function pump() {
-    if (!ctx || ctx.state !== 'running') return
-    while (nextTime < ctx.currentTime + 0.6) {
-      playStep(stepIdx, nextTime)
-      nextTime += MUSIC_STEP
-      stepIdx = (stepIdx + 1) % MUSIC_LEAD.length
-    }
-  }
-
-  function kickScheduler() {
-    if (musicTimer || !ctx) return
-    if (typeof globalThis.setInterval !== 'function') return
-    stepIdx = 0
-    nextTime = ctx.currentTime + 0.1
-    musicTimer = globalThis.setInterval(pump, 200)
-  }
-
   // Licensed theme track (see README credits), looped through the music
-  // bus so the music mute, ducking, and limiter treat it like the synth.
-  // A decoded buffer loop is sample-accurate: unlike an <audio> element,
-  // it cannot click or gap at the loop point. The synth plays immediately
-  // and hands over the moment the track is decoded; anything missing or
-  // failing keeps the synth.
+  // bus so the music mute, ducking, and limiter apply to it. A decoded
+  // buffer loop is sample-accurate: unlike an <audio> element, it cannot
+  // click or gap at the loop point. This track is the only theme: if it
+  // is missing or fails to decode, the game simply plays without music.
   let trackBuffer = null
   let trackLoading = null
   let trackSource = null
   let trackGain = null
   let trackFailed = false
+  let playing = false
   function startTrack() {
-    if (trackFailed || !ctx) {
-      kickScheduler()
-      return
-    }
+    if (trackFailed || !ctx) return
     if (
       typeof globalThis.fetch !== 'function' ||
       typeof ctx.decodeAudioData !== 'function' ||
       typeof ctx.createBufferSource !== 'function'
     ) {
-      kickScheduler()
+      trackFailed = true
       return
     }
-    kickScheduler()
     if (trackBuffer) {
       playTrackBuffer()
       return
@@ -369,7 +238,6 @@ globalThis.sfx = (() => {
     // The loop already runs: unlock() fires on every tap and keypress, and
     // restarting here is what cut the song back to the start each time.
     if (trackSource) return
-    stopSynth()
     if (!trackGain) {
       trackGain = ctx.createGain()
       trackGain.gain.value = 0.8
@@ -395,7 +263,6 @@ globalThis.sfx = (() => {
 
   function stopMusic() {
     playing = false
-    stopSynth()
     if (trackSource) {
       try {
         trackSource.stop()
@@ -404,13 +271,6 @@ globalThis.sfx = (() => {
       }
       trackSource = null
     }
-  }
-
-  function stopSynth() {
-    if (musicTimer && typeof globalThis.clearInterval === 'function') {
-      globalThis.clearInterval(musicTimer)
-    }
-    musicTimer = null
   }
 
   function isMusicPlaying() {

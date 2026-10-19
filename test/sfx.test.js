@@ -188,60 +188,35 @@ test('a saved mute is restored on the next load', () => {
   assert.equal(stats.masterGain.gain.value, 0)
 })
 
-test('theme music waits for a gesture, then loops', () => {
-  const { sfx, stats, listeners, timers } = makeEnv()
+test('theme music waits for a gesture, then loops', async () => {
+  const { sfx, stats, listeners } = makeEnv({ trackAudio: true })
   sfx.startMusic()
   assert.equal(sfx.isMusicPlaying(), true)
-  assert.equal(stats.contexts, 0)
-  assert.equal(timers.length, 0)
+  assert.equal(stats.contexts, 0, 'no context before a gesture')
+  assert.equal(stats.trackSources, 0, 'no track before a gesture')
   listeners.pointerdown()
-  assert.equal(timers.length, 1)
-  const before = stats.oscillators
-  timers[0]()
-  assert.ok(stats.oscillators > before, 'scheduled loop notes')
-  stats.created[0].currentTime = 5
-  const mid = stats.oscillators
-  timers[0]()
-  assert.ok(stats.oscillators > mid, 'keeps scheduling as time advances')
-})
-
-test('the theme plays drums, pad, and arp alongside lead and bass', () => {
-  const { sfx, stats, listeners, timers } = makeEnv()
-  listeners.pointerdown()
-  sfx.startMusic()
-  // The first pump schedules steps 0 and 1: bar pad, lead, bass, and kick
-  // on step 0, the arp in the lead's gap on step 1. Advancing time reaches
-  // step 2 and its snare.
-  timers[0]()
-  assert.ok(stats.oscillators >= 6, `several voices per step (got ${stats.oscillators})`)
-  stats.created[0].currentTime = 5
-  timers[0]()
-  assert.ok(stats.noiseSources >= 1, 'the snare fires a noise hit')
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources >= 1, 'track loops after the gesture')
 })
 
 test('the licensed track loops from a decoded buffer once ready', async () => {
-  const { sfx, stats, listeners, timers, cleared } = makeEnv({ trackAudio: true })
+  const { sfx, stats, listeners } = makeEnv({ trackAudio: true })
   listeners.pointerdown()
   sfx.startMusic()
-  assert.equal(timers.length, 1, 'synth covers the download')
   await new Promise((resolve) => setImmediate(resolve))
   await new Promise((resolve) => setImmediate(resolve))
   assert.ok(stats.trackSources >= 1, 'buffer loop starts after decode')
-  assert.deepEqual(cleared, [1], 'synth hands over')
 })
 
-test('a broken track keeps the synth loop', async () => {
-  const { sfx, stats, listeners, timers, cleared } = makeEnv({ trackAudio: 'error' })
+test('a broken track plays silence instead of crashing', async () => {
+  const { sfx, stats, listeners } = makeEnv({ trackAudio: 'error' })
   listeners.pointerdown()
   sfx.startMusic()
-  assert.equal(timers.length, 1)
   await new Promise((resolve) => setImmediate(resolve))
   await new Promise((resolve) => setImmediate(resolve))
   assert.equal(stats.trackSources, 0, 'no buffer loop')
-  assert.deepEqual(cleared, [], 'synth keeps playing')
-  const before = stats.oscillators
-  timers[0]()
-  assert.ok(stats.oscillators > before, 'synth notes scheduled')
+  assert.equal(sfx.isMusicPlaying(), true, 'music stays on, quietly')
 })
 
 test('later gestures never restart the running track', async () => {
@@ -261,55 +236,65 @@ test('later gestures never restart the running track', async () => {
   assert.equal(stats.trackSources, started, 'loop keeps playing from where it is')
 })
 
-test('stopMusic halts the loop', () => {
-  const { sfx, listeners, timers, cleared } = makeEnv()
+test('stopMusic halts the loop and startMusic resumes it', async () => {
+  const { sfx, stats, listeners } = makeEnv({ trackAudio: true })
   listeners.pointerdown()
   sfx.startMusic()
-  assert.equal(timers.length, 1)
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources >= 1, 'loop plays')
   sfx.stopMusic()
   assert.equal(sfx.isMusicPlaying(), false)
-  assert.deepEqual(cleared, [1])
+  const stopped = stats.trackSources
+  sfx.startMusic()
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources > stopped, 'loop starts over after resume')
 })
 
-test('mute silences the theme too', () => {
-  const { sfx, stats, listeners, timers } = makeEnv()
+test('mute silences the theme too', async () => {
+  const { sfx, stats, listeners } = makeEnv({ trackAudio: true })
   listeners.pointerdown()
   sfx.startMusic()
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources >= 1, 'loop plays')
+  // gains[0] is the master bus, gains[1] the music bus.
   sfx.setMuted(true)
-  const before = stats.oscillators
-  timers[0]()
-  assert.equal(stats.oscillators, before)
+  assert.equal(stats.gains[0].gain.value, 0, 'master silenced')
+  sfx.setMuted(false)
+  assert.ok(stats.gains[0].gain.value > 0, 'master back')
 })
 
-test('music has its own mute, independent of effects', () => {
-  const { sfx, stats, store, listeners, timers } = makeEnv()
+test('music has its own mute, independent of effects', async () => {
+  const { sfx, stats, store, listeners } = makeEnv({ trackAudio: true })
   listeners.pointerdown()
   sfx.startMusic()
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources >= 1, 'loop plays')
   sfx.setMusicMuted(true)
   assert.equal(sfx.isMusicMuted(), true)
   assert.equal(store.get('neon-grounds-music-mute'), '1')
-  const before = stats.oscillators
-  timers[0]()
-  assert.equal(stats.oscillators, before, 'theme stays silent')
+  assert.equal(stats.gains[1].gain.value, 0, 'music bus silenced')
   const effects = stats.oscillators
   sfx.tick()
   assert.ok(stats.oscillators > effects, 'effects still sound')
   sfx.setMusicMuted(false)
   assert.equal(store.get('neon-grounds-music-mute'), '0')
-  stats.created[0].currentTime = 5
-  timers[0]()
-  assert.ok(stats.oscillators > effects + 1, 'theme returns')
+  assert.ok(stats.gains[1].gain.value > 0, 'music bus back')
 })
 
-test('a saved music mute is restored on the next load', () => {
-  const { sfx, stats, listeners, timers } = makeEnv({ musicStored: '1' })
+test('a saved music mute is restored on the next load', async () => {
+  const { sfx, stats, listeners } = makeEnv({ musicStored: '1', trackAudio: true })
   assert.equal(sfx.isMusicMuted(), true)
   assert.equal(sfx.isMuted(), false)
   listeners.pointerdown()
   sfx.startMusic()
-  const before = stats.oscillators
-  timers[0]()
-  assert.equal(stats.oscillators, before)
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources >= 1, 'loop plays')
+  assert.equal(stats.gains[1].gain.value, 0, 'music bus stays silent')
 })
 
 test('music is a no-op without Web Audio', () => {
