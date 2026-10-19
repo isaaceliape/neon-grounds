@@ -73,8 +73,17 @@
       .reveal { opacity: 1; translate: none; transition: none; }
     }
     header.hero { text-align: center; padding: 72px 0 40px; }
+    @font-face {
+      font-family: 'Rocket Clouds DEMO';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('vendor/fonts/rocket-clouds-demo.woff2') format('woff2');
+    }
     header.hero h1 {
       margin: 0;
+      font-family: 'Rocket Clouds DEMO', system-ui, sans-serif;
+      font-weight: 400;
       font-size: clamp(52px, 10vw, 96px);
       letter-spacing: 0.02em;
     }

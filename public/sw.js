@@ -21,6 +21,7 @@ const SHELL = [
   'vendor/fontawesome/css/fontawesome.min.css',
   'vendor/fontawesome/css/solid.min.css',
   'vendor/fontawesome/webfonts/fa-solid-900.woff2',
+  'vendor/fonts/rocket-clouds-demo.woff2',
   'theme.mp3',
   'shots/picker.png',
   'shots/waiting-room.png',

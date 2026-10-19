@@ -92,6 +92,7 @@ test('the shell list matches the Vite build output', () => {
         'vendor/fontawesome/css/fontawesome.min.css',
         'vendor/fontawesome/css/solid.min.css',
         'vendor/fontawesome/webfonts/fa-solid-900.woff2',
+        'vendor/fonts/rocket-clouds-demo.woff2',
         'shots/picker.png',
         'shots/waiting-room.png',
         'shots/round.png',

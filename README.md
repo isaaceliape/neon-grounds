@@ -53,4 +53,4 @@ That one tension is the whole game, and it never gets old:
 - Standing on old enemy land is safe; only fresh captures kill.
 - Most ground when the clock stops wins.
 
-Theme: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free under the Pixabay Content License). Icons: [Font Awesome Free](https://fontawesome.com) (CC BY 4.0).
+Theme: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free under the Pixabay Content License). Icons: [Font Awesome Free](https://fontawesome.com) (CC BY 4.0). Logo font: [Rocket Clouds DEMO](https://www.1001fonts.com/rocket-clouds-demo-font.html) by Wacaksara, free for personal use (license bundled in `public/vendor/fonts`).
