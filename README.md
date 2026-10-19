@@ -1,195 +1,65 @@
 # Territory
 
-**[Play now!](https://isaaceliape.github.io/territory/)**
+**[▶ Play now!](https://isaaceliape.github.io/territory/) — free, no ads, no signup, nothing to install.**
 
-A local multiplayer game in the browser. Each player owns a patch of land, drives a snake, and takes more ground by closing a loop. Up to 12 players can share a room, and up to 3 of the seats can be bots. It works on phones too.
+Steal ground, cut lines, and snake your way to the biggest patch of neon on the map. Territory is a fast multiplayer turf war for up to 12 players that runs entirely in the browser — on your phone on the couch, or on a laptop across the internet.
 
-It installs as an app: after the first visit, desktop browsers offer to install it, and phones can add it to the home screen. The page then loads from cache and opens full-screen like a native app.
+![The front door: host a session or join one](docs/screenshots/picker.png)
 
-## Run it
+## Play with friends in 30 seconds
 
-From this folder:
+No accounts, no lobbies to grind, no server to rent. One of you taps **Host a session**, gets a 5-letter room code, and everyone else is in:
 
-```
+- **Type the code** — open the page anywhere and join with a name.
+- **Tap the invite link** — it fills the code in for you.
+- **Scan the QR code** — point your phone camera at the host's screen and you join straight away, no typing at all.
+
+![A waiting room: room code, invite buttons, and a scannable QR](docs/screenshots/waiting-room.png)
+
+Up to 12 seats per room. Short a few humans? Add bots (Easy, Normal, Hard) to fill the map. Rounds run 1–5 minutes, so there's always time for "just one more".
+
+And the party survives disaster: if the host's tab closes mid-round, the room carries on — the lowest-id player still connected automatically takes over under the same room code, seats kept, no restart needed.
+
+## Why it's fun
+
+You own a patch of land and drive a snake that never stops. Leave your land and you draw a live wire behind you: loop back home and everything inside is yours. But while that line is out, anyone who touches it kills you — and their exposed lines kill them right back.
+
+That one tension is the whole game, and it never gets old:
+
+- **Greed vs. safety.** A huge loop wins the round and paints half the map your color. It also leaves a mile of line for someone to cut.
+- **Cuts.** See an enemy line pulsing red near your head? Drive through it and they're gone. Watch your own the same way.
+- **Combacks.** Got boxed in? Your land stays yours, and one good loop steals it all back. Only the survivor takes the crown, so every round has a finish worth playing.
+- **Bots with personality.** Easy wobbles home early, Normal plays it straight, Hard hunts your exposed lines. Bots never die stupidly — they bounce off walls — so beating them means outplaying them.
+- **Photo finishes.** Most land when the clock stops wins. Ties break on kills. Simultaneous double knockouts both count.
+
+![A live round: trails, halo, scoreboard, mini-map](docs/screenshots/round.png)
+
+## Made for phones, great everywhere
+
+- **Touch controls** — two big turn buttons appear while you're alive. No pinch, no virtual joystick.
+- **Installable** — add it to your home screen and it opens full-screen like a native app, then loads from cache.
+- **Plays anywhere** — peer-to-peer over WebRTC, so game traffic flies straight between browsers. Free public hosting, zero servers to pay for, zero ads to sit through.
+- **Tune it your way** — the hamburger menu holds music, sound effects, cursor steering, an FPS readout, a mini-map toggle, and (for the host) Restart. Your choices are remembered.
+- **Juice included** — captures flash, deaths burst, winners get confetti, and a retro arcade loop (plus synthesized fallback) backs the whole thing. Calms down automatically with your system's reduce-motion setting.
+
+## The 10-second rules
+
+- Close a loop to take the ground inside it.
+- Cross a line and that player is out — including you.
+- Your line is only vulnerable outside your land.
+- Standing on old enemy land is safe; only fresh captures kill.
+- Most ground when the clock stops wins.
+
+## For developers
+
+```sh
 npm install
-npm run dev
+npm run dev      # Vite + hot reload on :4174
+npm test         # the suite: sim, migration, networking, PWA
+npm run build    # minified bundle into dist/
+npm start        # serve dist/ on :4173 (+ the ?local WebSocket sim)
 ```
 
-Vite serves the game with hot reload on port 4174: edits to styles and scripts refresh the page live, with no manual rebuild. Open http://localhost:4174 on this machine.
+Sources are ES modules in `src/`, the shared sim is `server/game.js`, and `public/` holds verbatim files (icons, manifest, vendored PeerJS/QR libraries, theme, service worker). Pushing to `main` tests, builds, and deploys to GitHub Pages, stamping the service-worker cache so every deploy lands fresh.
 
-`npm run build` bundles and minifies everything into `dist/` (stable file names, so the service worker shell list never churns). `npm start` serves that production bundle on port 4173 — that is also the path that runs the local WebSocket server, so add `?local` to the URL to play against Node instead of peer to peer. Anyone else on the same network or VPN opens one of the addresses printed in the terminal. The waiting room lists those addresses too.
-
-If the Mac asks whether Node may accept incoming connections, allow it. Set `PORT` to use a different port.
-
-Stop the server with Ctrl+C in that terminal. Closing a browser does not stop the server.
-
-Run `npm test` for the suite: sim rules, migration, networking, and PWA shell checks.
-
-## Online rooms (no VPN)
-
-Opening the page shows two choices: **Host a session** or **Join a session**. The host types their name and gets a 5-letter room code plus a one-tap invite link (`?code=` URL that fills the code in for guests) and a scannable QR of the same link. Everyone else opens the page or the link anywhere on the internet, types their name and the code, and joins. Phones can skip the typing: Scan QR code on the join screen reads the host's code through the camera and joins straight away. The same 12 seats and 3 bots apply.
-
-The host's browser runs the round, peer to peer over WebRTC. If the host's tab closes mid-round, the room carries on: the lowest-id remaining player automatically takes over under the same room code (the host streams takeover snapshots every few seconds), and everyone else rejoins with their seats kept. The host must keep the page open only in the sense that *someone's* page must stay open; losing the connection briefly is fine, and guests rejoin automatically for about 10 seconds, same as a dropped tab on the local server.
-
-Online rooms need internet access to reach the free PeerJS signaling server that introduces the players. After that introduction, game traffic flows directly between browsers. Win counts last for the tab session, and rounds are not written to `logs/results.log` (there is no server to write it).
-
-The app sources live in `src/` as ES modules, the sim in `server/game.js` (shared by the browser host and the Node server), and `public/` holds only files that ship verbatim: icons, the manifest, the vendored PeerJS client, the QR show/scan libraries, the theme song, and the service worker. Pushing to `main` runs the tests, builds the bundle, and deploys `dist/` to GitHub Pages automatically (see `.github/workflows/pages.yml`); enable Pages in the repo settings with the workflow source and share that URL instead of a VPN address.
-
-## Joining
-
-Type a name, type the room code (or scan the host's QR with Scan QR code), and click Join room. Names are up to 16 characters. If someone already has that name, the next person becomes "Name 2".
-
-The first human in the room is the host. A bot is never the host. If the host leaves for good, the next human becomes host. If nobody else is there, the next person who joins becomes host.
-
-A new visitor sees the name field until they join. The live round is not pushed at them before that.
-
-## Waiting room
-
-Everyone who has joined sees the same room: the player list, their color, and who the host is.
-
-- Your name. Edit it and press Enter, or click away. The list updates for everyone. Names lock when the round starts. You can edit again after the round, before the next one.
-- Round length. The host picks 1, 2, 3, or 5 minutes. The default is 3.
-- Add bot. Host only. Pick Easy, Normal, or Hard, then click Add bot. A room holds up to 3 bots. The host removes one with the x next to its name.
-- Start. Host only. Other players see a disabled "Waiting for the host" button.
-- Room code. The host's 5-letter code with Copy code, Copy invite link, and Show QR code, which renders the invite link as a QR phones can scan.
-
-Nothing moves until the host clicks Start. Then there is a 3 second countdown. During the countdown you can aim, but the snakes do not move yet.
-
-Restart, during a round, sends everyone back to this room. It does not start the countdown by itself.
-
-## How you move
-
-The snake always moves forward. It can head in any direction and turns in a curve. It does not snap to four straight lines.
-
-Keyboard, when Steer with the cursor is off:
-
-- Left arrow turns left.
-- Right arrow turns right.
-- Every other key does not steer.
-
-Hold the key to keep turning. If you never turn, you drive straight.
-
-Steer with the cursor: the snake curves toward the pointer. If the pointer is directly behind you, it turns sideways first. Toggle it anytime from the hamburger menu; off by default, and the choice is saved in this browser. Pressing a turn key or touch button switches back to buttons.
-
-Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A hamburger menu beside the mini-map holds Music, Sound, Steer with cursor, Show FPS (a frame-time readout for diagnosing hitches), Hide mini map, Restart (host only, during a round), and (on phones and tablets that support it) Full screen.
-
-You start in the middle of a small square of your own color, aimed toward the middle of the map.
-
-## Taking land
-
-Leave your land and you draw a line. You close the loop in one of two ways:
-
-- Drive back onto your own land.
-- Cross your own line. The loop between the two crossing points closes right there, on empty ground or on someone else's land.
-
-When a loop closes, two things happen:
-
-- Your whole line becomes yours, including the part that ran over someone else's land.
-- The area inside the loop becomes yours.
-
-A line that only runs across someone else's land, and never closes, takes nothing. Their squares stay theirs, and they stay alive.
-
-If the loop wraps part of their land, you take only that inside part, plus the squares your line covered. The rest of their land stays theirs. They are knocked out only if their head is inside the part you took.
-
-If two loops close on the same tick and cover the same ground, the shared part goes to whoever closed first. The later loop keeps everything else it took.
-
-You do not fill old holes in your land just by closing a new loop somewhere else.
-
-## How you go out
-
-Your line is vulnerable only while it is outside your land. These knock you out:
-
-- Someone crosses that outside line. The log says cut by that player.
-- You hit the edge of the map.
-- You crash head-on into another snake.
-- Your head is inside ground someone else just took. Standing on their older land is safe; only the fresh part of their loop kills you.
-- You disconnect and do not come back within 10 seconds during a round.
-
-Two loops closed on the same tick both count: if each one takes the other's head or line, both players go out.
-
-Bots never go out on their own: a bot that would hit the edge bounces back instead. Cut them, crash them, or box them in yourself, or they stay in the round.
-
-Driving across filled land is not a cut. A line painted on top of your land does not kill you.
-
-When you die, the unfinished line disappears. Land you already took stays your color. Other players can still take it by closing a loop around it.
-
-You then spectate. The camera shows the whole map. The timer and scoreboard stay. The status line says why you went out. You do not steer anymore.
-
-## How a round ends
-
-The clock runs out. Whoever owns the most land wins. If the top land totals match, and the kill counts match too, it is a draw.
-
-Or only one player is still alive, and the round started with more than one player. That survivor wins immediately, even if a dead player still owns more land. If everyone dies on the same tick, the round ends and land decides it.
-
-A solo round does not end just because you die. It runs until the timer.
-
-The score screen shows each player's share of the map. The host clicks Play again, which returns to the waiting room. Countdown waits for Start.
-
-## The bots
-
-The host adds up to three bots from the waiting room, each with its own level. A bot takes a normal seat and is marked with its level, for example (hard bot). Bots after the first are named Bot 2 and Bot 3.
-
-| Level | How it plays |
-|---|---|
-| Easy | Wobbles when it picks a heading, turns home early, and rests on its land between trips. It grows about half as fast as Normal. |
-| Normal | The original bot. |
-| Hard | Longer trips, and it goes after other players' exposed lines. It steers toward the nearest one and drives through it to cut that player. |
-
-It drives out from the middle of its land, then curves so the line does not cross itself. It looks along the turn it is about to make and rejects a heading that would hit its own older line, someone else's line, or the edge. Once the line is long, it heads back toward its own land if that way is clear. If the way home is blocked, it keeps turning.
-
-Every level plays by the same capture rules as everyone else. Deaths work the same too, with one exception: a bot that would hit the edge of the map bounces back instead of going out. The levels are plain numbers at the top of `server/game.js` (`BOT_LEVELS`), so tuning one is a one-line change.
-
-## What you see
-
-The board is dark. Each player has a neon color, and their land glows. Connected squares share a side and the outer corners are rounded. A diagonal step is filled in so the path does not leave a gap.
-
-During a round:
-
-- Scoreboard, top left. Name and percent of the map. Rows slide when the ranking changes and flash when a player gains ground. Dead players are dimmed but their land percent stays.
-- Timer, top center. It counts down. The last three seconds before movement are shown large.
-- Mini-map, top right. The whole board. It clears when a new round starts, so the previous round does not stay on it. Hide mini map in the hamburger menu drops it, and the menu and feed slide back up to the corner.
-- Show FPS, from the hamburger menu, adds a frame-time readout at the bottom left. Append `?fps=1` to the URL to force it on.
-- Kill feed, under the mini-map. Who was cut, boxed in, crashed, hit the wall, or left, and who took 1% or more of the map. It keeps four lines and each fades after 5 seconds.
-- Restart, in the hamburger menu, host only, during a round.
-- A bright head with a nose showing the direction you are heading: a dark outline and a white pulsing halo around your own, so it reads on your own land.
-- A line is drawn with a shimmer. Another player's exposed line within 10 cells of your head pulses red, so you can see what you could cut or what could cut you.
-- A red glow along a wall when you are driving toward it within 8 cells. It gets stronger as you close in.
-
-Effects: closing a loop flashes the taken ground and shows how much you took. A death bursts into particles and shakes the screen. The winner gets confetti. Turn off motion in your system settings (reduce motion) and these calm down.
-
-## Sound
-
-Short synthesized sounds play for captures, deaths, the countdown, GO, and the end of a round. The effects need no audio files; only the theme song ships as one (`public/theme.mp3`). Browsers only allow sound after you click or press a key, so the first sound comes after that. The hamburger menu beside the mini-map holds the Sound effects on/off toggle, which mutes everything, and the choice is saved in this browser.
-
-A looping theme starts once you join and keeps playing behind the round: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free for use under the Pixabay Content License). It plays from a decoded buffer loop, so the loop point is seamless, and the synth loop covers the download and stays as fallback if the track cannot load. Effects momentarily duck the theme instead of shouting over it, and a limiter keeps the loudest pile-ups from distorting. The menu's Music toggle silences just the theme; Sound mutes everything. Both choices are saved in this browser. Retune it in `src/sfx.js`: the `MUSIC_LEAD` and `MUSIC_BASS` tables are 32 eighth-note steps, so swapping frequencies is a data-only change.
-
-## Wins this session
-
-The waiting room and the score screen show a small "1 win" or "3 wins" next to a name. The server counts rounds won by name since it started. A draw adds nothing. Restarting the server resets the counts. The full history stays in `logs/results.log`.
-
-## How to play strip
-
-The join card and the waiting room show three small animations: leave your land, loop back to claim, cross a line to cut.
-
-## Disconnects
-
-Closing a browser does not stop the server.
-
-Your snake freezes for 10 seconds. Reopen the same tab in that time and you keep the seat. If you were host, you stay host. A new window is a new player. The old seat does not follow it.
-
-After 10 seconds in the waiting room, the seat is removed. After 10 seconds during a round, you die, the line goes away, and your land stays.
-
-In an online room there is one more case: if the host's tab closes for good, the lowest-id player still connected takes over as host under the same room code, with seats kept (see Online rooms above).
-
-## Logs
-
-When a round ends, the server prints the result and appends it to `logs/results.log`.
-
-```
-Winner: Isaac
-Isaac won with 18.2%
-Jonny lost with 6.4%, cut by Isaac
-Bot lost with 9.1%, cut by Isaac
-```
-
-A player who is still alive but has less land is logged as lost with less territory. A tie is logged as Draw.
+Theme: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free under the Pixabay Content License).
