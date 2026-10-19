@@ -388,7 +388,7 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 /* kill feed */
 #feed {
   position: absolute;
-  top: 176px;
+  top: 225px;
   right: 16px;
   width: 250px;
   margin: 0;
@@ -503,8 +503,8 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
    beside the mini-map */
 #menu-btn {
   position: fixed;
-  top: 16px;
-  right: 228px;
+  top: 171px;
+  right: 16px;
   z-index: 32;
   width: 46px;
   height: 46px;
@@ -515,8 +515,8 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 
 #menu {
   position: fixed;
-  top: 70px;
-  right: 228px;
+  top: 225px;
+  right: 16px;
   z-index: 32;
   margin: 0;
   padding: 8px;
@@ -629,11 +629,11 @@ html { overscroll-behavior: none; }
   #board { top: 8px; left: 8px; min-width: 0; width: 128px; padding: 5px 7px; font-size: 12px; }
   #board li { gap: 6px; }
   #mini { top: 8px; right: 8px; width: 104px; height: 78px; }
-  #menu-btn { top: 8px; right: 120px; }
-  #menu { top: 60px; right: 120px; }
+  #menu-btn { top: 94px; right: 8px; }
+  #menu { top: 148px; right: 8px; }
   #clock { top: 8px; font-size: 20px; padding: 4px 8px; }
   #clock.count { font-size: 56px; }
-  #feed { top: 100px; right: 8px; width: 170px; }
+  #feed { top: 148px; right: 8px; width: 170px; }
   #feed li { font-size: 12px; padding: 4px 8px; }
   #status { font-size: 13px; bottom: 16px; max-width: 70vw; text-align: center; }
   #go { top: 30%; }
@@ -653,7 +653,7 @@ html { overscroll-behavior: none; }
   #mini { top: 8px; right: 8px; width: 120px; height: 90px; }
   #clock { top: 8px; font-size: 22px; padding: 4px 10px; }
   #clock.count { font-size: 60px; }
-  #menu-btn { top: 8px; right: 136px; }
-  #menu { top: 60px; right: 136px; }
+  #menu-btn { top: 106px; right: 8px; }
+  #menu { top: 160px; right: 8px; }
   #feed { top: 186px; right: 8px; width: 190px; }
 }
