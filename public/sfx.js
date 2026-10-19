@@ -54,7 +54,7 @@ globalThis.sfx = (() => {
     const audio = create()
     if (audio && audio.state === 'suspended') audio.resume()
     // If startMusic() ran before the context existed, kick the loop now.
-    if (audio && playing) kickScheduler()
+    if (audio && playing) startTrack()
   }
 
   function setMuted(value) {
@@ -315,6 +315,43 @@ globalThis.sfx = (() => {
     musicTimer = globalThis.setInterval(pump, 200)
   }
 
+  // Licensed theme track (see README credits), looped through the music
+  // bus so the music mute, ducking, and limiter treat it like the synth.
+  // Anything missing or failing falls back to the synthesized loop.
+  let trackEl = null
+  let trackFailed = false
+  function startTrack() {
+    if (!trackFailed && trackEl) {
+      const play = trackEl.play()
+      if (play && typeof play.catch === 'function') play.catch(() => useSynthInstead())
+      return
+    }
+    if (
+      trackFailed ||
+      !ctx ||
+      typeof globalThis.Audio !== 'function' ||
+      typeof ctx.createMediaElementSource !== 'function'
+    ) {
+      kickScheduler()
+      return
+    }
+    trackEl = new globalThis.Audio()
+    trackEl.src = 'theme.mp3'
+    trackEl.loop = true
+    trackEl.preload = 'auto'
+    trackEl.volume = 0.8
+    ctx.createMediaElementSource(trackEl).connect(music)
+    trackEl.addEventListener('error', () => useSynthInstead())
+    const play = trackEl.play()
+    if (play && typeof play.catch === 'function') play.catch(() => useSynthInstead())
+  }
+
+  function useSynthInstead() {
+    trackFailed = true
+    trackEl = null
+    if (playing) kickScheduler()
+  }
+
   // Starts the loop. Safe to call before the first gesture: it waits for
   // unlock() and never creates an AudioContext by itself.
   function startMusic() {
@@ -322,12 +359,13 @@ globalThis.sfx = (() => {
     playing = true
     if (ctx) {
       if (ctx.state === 'suspended') ctx.resume()
-      kickScheduler()
+      startTrack()
     }
   }
 
   function stopMusic() {
     playing = false
+    if (trackEl) trackEl.pause()
     if (musicTimer && typeof globalThis.clearInterval === 'function') {
       globalThis.clearInterval(musicTimer)
     }

@@ -6,8 +6,8 @@ import vm from 'node:vm'
 const source = readFileSync(new URL('../public/sfx.js', import.meta.url), 'utf8')
 
 // Minimal stand-ins for the Web Audio API that count what the code does.
-function makeEnv({ stored = null, musicStored = null, withAudio = true } = {}) {
-  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [], gains: [] }
+function makeEnv({ stored = null, musicStored = null, withAudio = true, trackAudio = false } = {}) {
+  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [], gains: [], tracks: [] }
   const timers = []
   const cleared = []
   const entries = []
@@ -72,6 +72,10 @@ function makeEnv({ stored = null, musicStored = null, withAudio = true } = {}) {
         release: param(),
       }
     }
+
+    createMediaElementSource() {
+      return node()
+    }
   }
 
   const listeners = {}
@@ -83,6 +87,25 @@ function makeEnv({ stored = null, musicStored = null, withAudio = true } = {}) {
     addEventListener: (type, fn) => { listeners[type] = fn },
   }
   if (withAudio) sandbox.AudioContext = FakeAudioContext
+  if (trackAudio) {
+    sandbox.Audio = class {
+      constructor() {
+        stats.tracks.push(this)
+        this.listeners = {}
+        this.played = 0
+      }
+
+      play() {
+        this.played += 1
+      }
+
+      pause() {}
+
+      addEventListener(type, fn) {
+        this.listeners[type] = fn
+      }
+    }
+  }
   sandbox.globalThis = sandbox
   sandbox.setInterval = (fn) => { timers.push(fn); return timers.length }
   sandbox.clearInterval = (id) => { cleared.push(id) }
@@ -191,6 +214,26 @@ test('the theme plays drums, pad, and arp alongside lead and bass', () => {
   stats.created[0].currentTime = 5
   timers[0]()
   assert.ok(stats.noiseSources >= 1, 'the snare fires a noise hit')
+})
+
+test('the licensed track plays through the music bus when available', () => {
+  const { sfx, stats, listeners, timers } = makeEnv({ trackAudio: true })
+  listeners.pointerdown()
+  sfx.startMusic()
+  assert.equal(stats.tracks.length, 1, 'track element created')
+  assert.equal(stats.tracks[0].played, 1, 'track plays')
+  assert.equal(timers.length, 0, 'synth loop stays off while the track plays')
+})
+
+test('a broken track falls back to the synth loop', () => {
+  const { sfx, stats, listeners, timers } = makeEnv({ trackAudio: true })
+  listeners.pointerdown()
+  sfx.startMusic()
+  stats.tracks[0].listeners.error()
+  assert.equal(timers.length, 1, 'synth scheduler starts')
+  const before = stats.oscillators
+  timers[0]()
+  assert.ok(stats.oscillators > before, 'synth notes scheduled')
 })
 
 test('stopMusic halts the loop', () => {
