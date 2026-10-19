@@ -366,18 +366,14 @@ globalThis.sfx = (() => {
 
   function playTrackBuffer() {
     if (!trackBuffer || !ctx || !playing || trackFailed) return
+    // The loop already runs: unlock() fires on every tap and keypress, and
+    // restarting here is what cut the song back to the start each time.
+    if (trackSource) return
     stopSynth()
     if (!trackGain) {
       trackGain = ctx.createGain()
       trackGain.gain.value = 0.8
       trackGain.connect(music)
-    }
-    if (trackSource) {
-      try {
-        trackSource.stop()
-      } catch {
-        // already stopped
-      }
     }
     trackSource = ctx.createBufferSource()
     trackSource.buffer = trackBuffer

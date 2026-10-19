@@ -244,6 +244,23 @@ test('a broken track keeps the synth loop', async () => {
   assert.ok(stats.oscillators > before, 'synth notes scheduled')
 })
 
+test('later gestures never restart the running track', async () => {
+  const { sfx, stats, listeners } = makeEnv({ trackAudio: true })
+  listeners.pointerdown()
+  sfx.startMusic()
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources >= 1, 'buffer loop starts after decode')
+  const started = stats.trackSources
+  // Every tap and keypress unlocks audio; none may cut the song over.
+  listeners.pointerdown()
+  listeners.keydown()
+  listeners.click()
+  listeners.pointerdown()
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(stats.trackSources, started, 'loop keeps playing from where it is')
+})
+
 test('stopMusic halts the loop', () => {
   const { sfx, listeners, timers, cleared } = makeEnv()
   listeners.pointerdown()
