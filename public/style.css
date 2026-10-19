@@ -665,6 +665,13 @@ html { overscroll-behavior: none; }
   #touch button { height: 72px; width: min(26vw, 150px); font-size: 28px; }
   #overlay { padding: 12px; }
   #overlay h1, #card h1 { font-size: 30px; }
+  /* sideways modal: widen the card and pair fields side by side so the
+     waiting room fits the short viewport without scrolling */
+  #card { width: min(780px, 100%); padding: 16px 18px 14px; }
+  #blurb { margin-bottom: 10px; }
+  #howto { margin-bottom: 10px; }
+  #room, #host-setup, #join-setup { grid-template-columns: 1fr 1fr; align-items: start; column-gap: 14px; }
+  #room #roster { grid-column: 1 / -1; }
   #status { bottom: 12px; }
   #board { top: 8px; left: 8px; min-width: 0; width: 150px; padding: 5px 8px; font-size: 13px; }
   #mini { top: 8px; right: 8px; width: 120px; height: 90px; }
