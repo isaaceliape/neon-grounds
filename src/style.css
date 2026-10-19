@@ -36,6 +36,8 @@ html, body {
    board but below the HUD and the card, and switch off the moment a round
    starts, so gameplay never pays for them. Static when the system asks
    for less motion. */
+#ver { position: fixed; right: 10px; bottom: 8px; z-index: 5; font-size: 11px; color: var(--muted); opacity: 0.75; pointer-events: none; }
+
 #bg-blobs { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; transition: opacity 0.8s ease; }
 #bg-blobs i { position: absolute; width: 62vmax; height: 62vmax; filter: blur(60px); opacity: 0.42; }
 #bg-blobs .b1 { background: radial-gradient(circle, var(--n1), transparent 55%); top: -18%; left: -14%; animation: morph1 4s ease-in-out infinite; }

@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
 // Dev server owns port 4174 (4173 is taken on this machine). The build
 // keeps flat, stable file names on purpose: the service worker precaches
@@ -8,6 +11,10 @@ import { defineConfig } from 'vite'
 // /neon-grounds/ subpath, where absolute /index.js-style URLs 404.
 export default defineConfig({
   base: './',
+  define: {
+    // Baked into both pages: the corner badge and the ?fps readout show it.
+    __APP_VERSION__: JSON.stringify(version),
+  },
   server: {
     port: 4174,
     strictPort: true,

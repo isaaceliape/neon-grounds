@@ -66,6 +66,7 @@
     .reveal.in { opacity: 1; translate: 0 0; }
     .steps li:nth-child(2), .shots figure:nth-child(2) { transition-delay: 0.1s; }
     .steps li:nth-child(3), .shots figure:nth-child(3) { transition-delay: 0.2s; }
+    #ver { position: fixed; right: 10px; bottom: 8px; z-index: 5; font-size: 11px; color: var(--muted); opacity: 0.75; pointer-events: none; }
     @media (prefers-reduced-motion: reduce) {
       #bg-blobs i { animation: none; }
       .reveal { opacity: 1; translate: none; transition: none; }
@@ -143,6 +144,7 @@
 </head>
 <body>
   <div id="bg-blobs" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
+  <div id="ver" aria-hidden="true"></div>
   <div class="wrap">
     <header class="hero">
       <h1><span class="l1">N</span><span class="l2">e</span><span class="l3">o</span><span class="l4">n</span> <span class="grad">Grounds</span></h1>
@@ -204,7 +206,13 @@
     </footer>
   </div>
   <noscript><style>.reveal { opacity: 1; translate: none; }</style></noscript>
-  <script>
+  <script type="module">
+    // Build-stamped version badge (__APP_VERSION__ is replaced at build).
+    try {
+      document.querySelector('#ver').textContent = 'v' + __APP_VERSION__
+    } catch {
+      // Badge stays empty; the page works without it.
+    }
     // Reveal sections and cards as they scroll into view.
     try {
       const els = [...document.querySelectorAll('section.reveal, footer.reveal, .steps li, .shots figure, ul.fun li')]

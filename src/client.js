@@ -1934,4 +1934,9 @@ showJoin()
 // The landing page links here with ?join=1 to skip the picker.
 if (queryParams.has('join') && !queryParams.has('code')) showSetup('join')
 applyQuality(0)
+try {
+  document.querySelector('#ver').textContent = `v${__APP_VERSION__}`
+} catch {
+  // Badge stays empty; the game works without it.
+}
 requestAnimationFrame(frame)
