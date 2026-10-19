@@ -69,6 +69,7 @@
     #ver { position: fixed; right: 10px; bottom: 8px; z-index: 5; font-size: 11px; color: var(--muted); opacity: 0.75; pointer-events: none; }
     @media (prefers-reduced-motion: reduce) {
       #bg-blobs i { animation: none; }
+      header.hero h1 .l3 { animation: none; }
       .reveal { opacity: 1; translate: none; transition: none; }
     }
     header.hero { text-align: center; padding: 72px 0 40px; }
@@ -76,18 +77,49 @@
       margin: 0;
       font-size: clamp(52px, 10vw, 96px);
       letter-spacing: 0.02em;
-      filter: drop-shadow(0 0 18px rgba(255, 79, 216, 0.45));
     }
-    header.hero h1 .l1 { color: var(--n1); }
-    header.hero h1 .l2 { color: var(--n2); }
-    header.hero h1 .l3 { color: var(--n3); }
-    header.hero h1 .l4 { color: var(--n4); }
+    header.hero h1 .l1, header.hero h1 .l2, header.hero h1 .l3, header.hero h1 .l4, header.hero h1 .grad {
+      color: #fff;
+      text-shadow:
+        0 0 7px #fff,
+        0 0 10px #fff,
+        0 0 21px #fff,
+        0 0 42px var(--glow),
+        0 0 82px var(--glow),
+        0 0 92px var(--glow),
+        0 0 102px var(--glow),
+        0 0 151px var(--glow);
+    }
+    header.hero h1 .l1 { --glow: var(--n1); }
+    header.hero h1 .l2 { --glow: var(--n2); }
+    header.hero h1 .l3 { --glow: var(--n3); animation: neon-flicker 4s infinite; }
+    header.hero h1 .l4 { --glow: var(--n4); }
     header.hero h1 .grad {
-      background: linear-gradient(100deg, var(--n1), var(--n4) 45%, var(--n2));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
+      --glow: var(--n1);
+      background: none;
+      -webkit-text-fill-color: #fff;
+    }
+    @keyframes neon-flicker {
+      0%, 18%, 22%, 25%, 53%, 57%, 100% {
+        text-shadow:
+          0 0 4px #fff,
+          0 0 11px #fff,
+          0 0 19px #fff,
+          0 0 40px var(--glow),
+          0 0 80px var(--glow),
+          0 0 90px var(--glow),
+          0 0 100px var(--glow),
+          0 0 150px var(--glow);
+      }
+      20%, 24%, 55% {
+        text-shadow: none;
+      }
+    }
+    header.hero h1 .grad {
+      --glow: var(--n1);
+      background: none;
+      -webkit-text-fill-color: #fff;
+      color: #fff;
     }
     header.hero p.tag {
       margin: 12px 0 0;
