@@ -122,7 +122,7 @@ const results = document.querySelector('#results')
 const error = document.querySelector('#error')
 const linkNote = document.querySelector('#link-note')
 
-const RULES = 'Close a loop to take the ground inside it. Cross a line and that player is out. Most ground when the clock stops wins. Move with WASD or the arrow keys.'
+const RULES = 'Close a loop to take the ground inside it. Cross a line and that player is out. Most ground when the clock stops wins. Move with the left and right arrow keys.'
 const PAPER = [10, 12, 20]
 const KEYS = {
   ArrowUp: 'up',
@@ -1706,8 +1706,8 @@ document.addEventListener('keydown', (event) => {
 const heldTurn = { left: false, right: false }
 
 function turnKey(key) {
-  if (key === 'ArrowLeft' || key === 'a' || key === 'A') return 'left'
-  if (key === 'ArrowRight' || key === 'd' || key === 'D') return 'right'
+  if (key === 'ArrowLeft') return 'left'
+  if (key === 'ArrowRight') return 'right'
   return null
 }
 

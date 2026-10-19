@@ -60,9 +60,9 @@ The snake always moves forward. It can head in any direction and turns in a curv
 
 Keyboard, when Steer with the cursor is off:
 
-- A or Left arrow turns left.
-- D or Right arrow turns right.
-- W, S, and the up and down arrows do not steer.
+- Left arrow turns left.
+- Right arrow turns right.
+- Every other key does not steer.
 
 Hold the key to keep turning. If you never turn, you drive straight.
 
