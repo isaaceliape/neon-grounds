@@ -149,6 +149,12 @@ h1 {
   font-size: 42px;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+h1 .l1 { color: var(--n1); }
+h1 .l2 { color: var(--glow); }
+h1 .l3 { color: var(--n3); }
+h1 .l4 { color: var(--n4); }
+h1 .grad {
   background: linear-gradient(100deg, var(--n1), var(--n4) 45%, var(--glow));
   -webkit-background-clip: text;
   background-clip: text;
