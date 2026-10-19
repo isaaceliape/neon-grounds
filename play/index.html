@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070910">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Territory">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <title>Territory</title>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div id="hud" hidden>
+    <ol id="board"></ol>
+    <div id="clock"></div>
+    <div id="go" hidden>GO!</div>
+    <canvas id="mini" width="168" height="126"></canvas>
+    <ol id="feed"></ol>
+    <p id="status"></p>
+    <div id="touch" hidden>
+      <button type="button" id="touch-left" aria-label="Turn left">&#9664;</button>
+      <button type="button" id="touch-right" aria-label="Turn right">&#9654;</button>
+    </div>
+  </div>
+  <div id="overlay">
+    <form id="card">
+      <h1>Territory</h1>
+      <p id="blurb">Close a loop to take the ground inside it. Cross a line and that player is out. Most ground when the clock stops wins.</p>
+      <ol id="howto" aria-label="How to play">
+        <li>
+          <svg viewBox="0 0 64 44" aria-hidden="true">
+            <rect class="hw-home" x="4" y="13" width="18" height="18" rx="3"/>
+            <path class="hw-line draw" d="M22 22 H54" pathLength="40"/>
+            <circle class="hw-head slide" cx="22" cy="22" r="3.2"/>
+          </svg>
+          <span>Leave your land</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 64 44" aria-hidden="true">
+            <path class="hw-fill fill" d="M22 22 H50 V38 H13 V31 H22 Z"/>
+            <rect class="hw-home" x="4" y="13" width="18" height="18" rx="3"/>
+            <path class="hw-line draw-loop" d="M22 22 H50 V38 H13 V31" pathLength="80"/>
+          </svg>
+          <span>Loop back to claim</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 64 44" aria-hidden="true">
+            <path class="hw-foe cut" d="M8 30 H56" pathLength="48"/>
+            <path class="hw-line draw-down" d="M32 4 V40" pathLength="36"/>
+            <circle class="hw-spark pop" cx="32" cy="30" r="5"/>
+          </svg>
+          <span>Cross a line to cut</span>
+        </li>
+      </ol>
+      <div id="picker">
+        <div id="pick-row">
+          <button type="button" id="pick-host">Host a session</button>
+          <button type="button" id="pick-join">Join a session</button>
+        </div>
+        <p id="pick-hint">Hosting creates a room code to share. Joining needs the host's code.</p>
+      </div>
+      <div id="host-setup" hidden>
+        <label for="host-name">Your name</label>
+        <input id="host-name" maxlength="16" autocomplete="off" placeholder="e.g. Alex">
+        <button type="button" id="host-room">Get a room code</button>
+        <button type="button" id="host-back" class="ghost">Back</button>
+      </div>
+      <div id="join-setup" hidden>
+        <label for="guest-name">Your name</label>
+        <input id="guest-name" maxlength="16" autocomplete="off" placeholder="e.g. Alex">
+        <label for="code">Room code</label>
+        <input id="code" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE">
+        <button type="button" id="join-room">Join room</button>
+        <button type="button" id="scan-qr">Scan QR code</button>
+        <div id="scanner" hidden>
+          <video id="scanner-video" playsinline muted></video>
+          <canvas id="scanner-canvas" hidden></canvas>
+          <p id="scanner-hint">Point the camera at the host's QR code.</p>
+          <button type="button" id="scanner-stop" class="ghost">Cancel</button>
+        </div>
+        <button type="button" id="join-back" class="ghost">Back</button>
+      </div>
+      <div id="join-row" hidden>
+        <label for="name">Name</label>
+        <input id="name" maxlength="16" autocomplete="off" required>
+        <button type="submit" id="join">Join</button>
+      </div>
+      <div id="room" hidden>
+        <p id="room-code" hidden></p>
+        <div id="invite-row" hidden>
+          <button type="button" id="copy-code">Copy code</button>
+          <button type="button" id="copy-link">Copy invite link</button>
+          <button type="button" id="show-qr">Show QR code</button>
+        </div>
+        <div id="qr" hidden></div>
+        <label id="nick-label" for="nick">Your name</label>
+        <input id="nick" maxlength="16" autocomplete="off">
+        <ol id="roster"></ol>
+        <div id="share"></div>
+        <label id="length-label" for="minutes">Round length</label>
+        <select id="minutes">
+          <option value="1">1 minute</option>
+          <option value="2">2 minutes</option>
+          <option value="3" selected>3 minutes</option>
+          <option value="5">5 minutes</option>
+        </select>
+        <div id="bot-row">
+          <select id="bot-level" aria-label="Bot level">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+          </select>
+          <button type="button" id="add-bot">Add bot</button>
+        </div>
+        <button type="button" id="start">Start</button>
+        <p id="waiting"></p>
+      </div>
+      <ol id="results" hidden></ol>
+      <p id="error"></p>
+      <p id="link-note"></p>
+    </form>
+  </div>
+  <canvas id="fx"></canvas>
+  <button type="button" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menu">&#9776;</button>
+  <div id="menu" hidden>
+    <button type="button" id="music">Music on</button>
+    <button type="button" id="full" hidden>Full screen</button>
+    <button type="button" id="mute">Sound effects on</button>
+    <label class="toggle" for="steer">
+      <input id="steer" type="checkbox">
+      Steer with cursor
+    </label>
+    <label class="toggle" for="show-fps">
+      <input id="show-fps" type="checkbox">
+      Show FPS
+    </label>
+    <label class="toggle" for="hide-mini">
+      <input id="hide-mini" type="checkbox">
+      Hide mini map
+    </label>
+    <button type="button" id="restart" hidden>Restart</button>
+  </div>
+  <!-- PeerJS and the QR generator stay classic scripts (vendored, no ESM builds); the app is one module. -->
+  <script src="../peerjs.min.js"></script>
+  <script src="../qrcode.min.js"></script>
+  <script src="../jsqr.min.js"></script>
+  <script type="module" src="/src/client.js"></script>
+</body>
+</html>

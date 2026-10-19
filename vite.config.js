@@ -20,6 +20,12 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
+      // Landing page at /, game at /play/. The landing is dependency-free
+      // (inline script + shots), so the game bundle stays exactly one chunk.
+      input: {
+        main: 'index.html',
+        play: 'play/index.html',
+      },
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: '[name].js',

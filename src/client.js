@@ -208,7 +208,7 @@ const touchPad = document.querySelector('#touch')
 // visit, so the page loads offline and browsers offer installation.
 if ('serviceWorker' in navigator) {
   globalThis.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {})
+    navigator.serviceWorker.register('../sw.js').catch(() => {})
   })
 }
 const touchLeft = document.querySelector('#touch-left')
@@ -1895,4 +1895,6 @@ window.addEventListener('keyup', (event) => {
 // online rooms only, so no WebSocket is opened unless asked for.
 if (LOCAL_DEV) connect()
 showJoin()
+// The landing page links here with ?join=1 to skip the picker.
+if (queryParams.has('join') && !queryParams.has('code')) showSetup('join')
 requestAnimationFrame(frame)

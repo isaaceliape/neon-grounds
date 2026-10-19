@@ -80,11 +80,14 @@ export function startServer({ port = 0, log = false, gameOptions = {}, resultsLo
     try {
       const url = new URL(req.url ?? '/', 'http://localhost')
       const requested = decodeURIComponent(url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\/+/, ''))
-      const file = path.resolve(dir, requested)
+      let file = path.resolve(dir, requested)
       if (file !== dir && !file.startsWith(`${dir}${path.sep}`)) {
         res.writeHead(403).end()
         return
       }
+      // Folders serve their index page, so /play/ reaches the game.
+      const probe = await stat(file).catch(() => null)
+      if (probe?.isDirectory()) file = path.join(file, 'index.html')
       const body = await readFile(file)
       const ext = path.extname(file)
       res.writeHead(200, {

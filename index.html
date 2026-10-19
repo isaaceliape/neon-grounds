@@ -2,153 +2,155 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#070910">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Territory">
+  <meta name="description" content="Territory: a free multiplayer turf war in the browser. No ads, no signup. Host a room, share a code or QR, and steal your friends' ground.">
+  <meta property="og:title" content="Territory — a free multiplayer turf war">
+  <meta property="og:description" content="Close loops, cut lines, take the map. Up to 12 players, free, no ads, right in the browser.">
+  <meta property="og:image" content="shots/round.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <title>Territory</title>
+  <title>Territory — a free multiplayer turf war</title>
+  <style>
+    :root {
+      --bg: #070910;
+      --card: #0c121c;
+      --line: rgba(57, 255, 210, 0.35);
+      --neon: #39ffd2;
+      --pink: #ff2d78;
+      --muted: #8ea0b8;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: #eaf6f1;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+    header.hero { text-align: center; padding: 72px 0 40px; }
+    header.hero h1 {
+      margin: 0;
+      font-size: clamp(52px, 10vw, 96px);
+      letter-spacing: 0.02em;
+      color: var(--neon);
+      text-shadow: 0 0 18px rgba(57, 255, 210, 0.65), 0 0 60px rgba(57, 255, 210, 0.3);
+    }
+    header.hero p.tag {
+      margin: 12px 0 0;
+      font-size: clamp(18px, 3.4vw, 24px);
+      color: #fff;
+    }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 20px 0 0; padding: 0; list-style: none; }
+    .badges li {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 14px;
+      color: var(--neon);
+      background: rgba(57, 255, 210, 0.06);
+    }
+    .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 32px 0 0; }
+    .cta a {
+      display: inline-block;
+      padding: 16px 44px;
+      font-size: 20px;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: var(--radius);
+      border: 1px solid var(--neon);
+      color: #06231c;
+      background: var(--neon);
+      box-shadow: 0 0 24px rgba(57, 255, 210, 0.45);
+    }
+    .cta a.ghost { background: transparent; color: var(--neon); box-shadow: none; }
+    section { padding: 36px 0; }
+    section h2 { color: var(--neon); font-size: 28px; margin: 0 0 12px; }
+    .steps { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 16px 0 0; padding: 0; list-style: none; }
+    .steps li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+    .steps li strong { display: block; color: var(--neon); margin-bottom: 4px; }
+    .shots { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .shots figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+    .shots img { display: block; width: 100%; height: auto; }
+    .shots figcaption { padding: 10px 14px; color: var(--muted); font-size: 14px; }
+    ul.fun { margin: 12px 0 0; padding-left: 20px; }
+    ul.fun li { margin: 6px 0; }
+    footer { text-align: center; padding: 24px 0 64px; color: var(--muted); font-size: 14px; }
+    footer a { color: var(--neon); }
+  </style>
 </head>
 <body>
-  <canvas id="view"></canvas>
-  <div id="hud" hidden>
-    <ol id="board"></ol>
-    <div id="clock"></div>
-    <div id="go" hidden>GO!</div>
-    <canvas id="mini" width="168" height="126"></canvas>
-    <ol id="feed"></ol>
-    <p id="status"></p>
-    <div id="touch" hidden>
-      <button type="button" id="touch-left" aria-label="Turn left">&#9664;</button>
-      <button type="button" id="touch-right" aria-label="Turn right">&#9654;</button>
-    </div>
-  </div>
-  <div id="overlay">
-    <form id="card">
+  <div class="wrap">
+    <header class="hero">
       <h1>Territory</h1>
-      <p id="blurb">Close a loop to take the ground inside it. Cross a line and that player is out. Most ground when the clock stops wins.</p>
-      <ol id="howto" aria-label="How to play">
-        <li>
-          <svg viewBox="0 0 64 44" aria-hidden="true">
-            <rect class="hw-home" x="4" y="13" width="18" height="18" rx="3"/>
-            <path class="hw-line draw" d="M22 22 H54" pathLength="40"/>
-            <circle class="hw-head slide" cx="22" cy="22" r="3.2"/>
-          </svg>
-          <span>Leave your land</span>
-        </li>
-        <li>
-          <svg viewBox="0 0 64 44" aria-hidden="true">
-            <path class="hw-fill fill" d="M22 22 H50 V38 H13 V31 H22 Z"/>
-            <rect class="hw-home" x="4" y="13" width="18" height="18" rx="3"/>
-            <path class="hw-line draw-loop" d="M22 22 H50 V38 H13 V31" pathLength="80"/>
-          </svg>
-          <span>Loop back to claim</span>
-        </li>
-        <li>
-          <svg viewBox="0 0 64 44" aria-hidden="true">
-            <path class="hw-foe cut" d="M8 30 H56" pathLength="48"/>
-            <path class="hw-line draw-down" d="M32 4 V40" pathLength="36"/>
-            <circle class="hw-spark pop" cx="32" cy="30" r="5"/>
-          </svg>
-          <span>Cross a line to cut</span>
-        </li>
+      <p class="tag">Steal ground. Cut lines. Take the map — with your friends.</p>
+      <ul class="badges">
+        <li>Free</li>
+        <li>No ads</li>
+        <li>No signup</li>
+        <li>Up to 12 players</li>
+      </ul>
+      <div class="cta">
+        <a href="play/">▶ Play now</a>
+        <a class="ghost" href="play/?join=1">Join a room</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>With friends in 30 seconds</h2>
+      <ol class="steps">
+        <li><strong>1. Host</strong> One of you taps Host a session and gets a 5-letter room code.</li>
+        <li><strong>2. Share</strong> Send the code, the invite link, or the QR on the host's screen.</li>
+        <li><strong>3. Play</strong> Guests type the code — or scan the QR and join straight away. Rounds run 1–5 minutes.</li>
       </ol>
-      <div id="picker">
-        <div id="pick-row">
-          <button type="button" id="pick-host">Host a session</button>
-          <button type="button" id="pick-join">Join a session</button>
-        </div>
-        <p id="pick-hint">Hosting creates a room code to share. Joining needs the host's code.</p>
+    </section>
+
+    <section>
+      <h2>Look at it go</h2>
+      <div class="shots">
+        <figure>
+          <img src="shots/round.png" alt="A live round: neon trails, scoreboard, and mini-map" loading="lazy">
+          <figcaption>Close loops to claim land. Cross a line and that player is out.</figcaption>
+        </figure>
+        <figure>
+          <img src="shots/waiting-room.png" alt="A waiting room with a room code and QR code" loading="lazy">
+          <figcaption>One code, one link, one QR — everyone is in within seconds.</figcaption>
+        </figure>
+        <figure>
+          <img src="shots/picker.png" alt="Host a session or join a session" loading="lazy">
+          <figcaption>Two doors: host the party or join it.</figcaption>
+        </figure>
       </div>
-      <div id="host-setup" hidden>
-        <label for="host-name">Your name</label>
-        <input id="host-name" maxlength="16" autocomplete="off" placeholder="e.g. Alex">
-        <button type="button" id="host-room">Get a room code</button>
-        <button type="button" id="host-back" class="ghost">Back</button>
+    </section>
+
+    <section>
+      <h2>Why it sticks</h2>
+      <ul class="fun">
+        <li><strong>Greed vs. safety.</strong> A huge loop wins the round — and leaves a mile of line to cut.</li>
+        <li><strong>Comebacks.</strong> Your taken land stays yours; one good loop steals it all back.</li>
+        <li><strong>Bots with personality.</strong> Easy wobbles, Normal plays straight, Hard hunts your lines.</li>
+        <li><strong>Plays anywhere.</strong> Phones, laptops, touch or keys. Install it like a native app.</li>
+      </ul>
+      <div class="cta">
+        <a href="play/">▶ Play now — free, no ads</a>
       </div>
-      <div id="join-setup" hidden>
-        <label for="guest-name">Your name</label>
-        <input id="guest-name" maxlength="16" autocomplete="off" placeholder="e.g. Alex">
-        <label for="code">Room code</label>
-        <input id="code" maxlength="8" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE">
-        <button type="button" id="join-room">Join room</button>
-        <button type="button" id="scan-qr">Scan QR code</button>
-        <div id="scanner" hidden>
-          <video id="scanner-video" playsinline muted></video>
-          <canvas id="scanner-canvas" hidden></canvas>
-          <p id="scanner-hint">Point the camera at the host's QR code.</p>
-          <button type="button" id="scanner-stop" class="ghost">Cancel</button>
-        </div>
-        <button type="button" id="join-back" class="ghost">Back</button>
-      </div>
-      <div id="join-row" hidden>
-        <label for="name">Name</label>
-        <input id="name" maxlength="16" autocomplete="off" required>
-        <button type="submit" id="join">Join</button>
-      </div>
-      <div id="room" hidden>
-        <p id="room-code" hidden></p>
-        <div id="invite-row" hidden>
-          <button type="button" id="copy-code">Copy code</button>
-          <button type="button" id="copy-link">Copy invite link</button>
-          <button type="button" id="show-qr">Show QR code</button>
-        </div>
-        <div id="qr" hidden></div>
-        <label id="nick-label" for="nick">Your name</label>
-        <input id="nick" maxlength="16" autocomplete="off">
-        <ol id="roster"></ol>
-        <div id="share"></div>
-        <label id="length-label" for="minutes">Round length</label>
-        <select id="minutes">
-          <option value="1">1 minute</option>
-          <option value="2">2 minutes</option>
-          <option value="3" selected>3 minutes</option>
-          <option value="5">5 minutes</option>
-        </select>
-        <div id="bot-row">
-          <select id="bot-level" aria-label="Bot level">
-            <option value="easy">Easy</option>
-            <option value="normal" selected>Normal</option>
-            <option value="hard">Hard</option>
-          </select>
-          <button type="button" id="add-bot">Add bot</button>
-        </div>
-        <button type="button" id="start">Start</button>
-        <p id="waiting"></p>
-      </div>
-      <ol id="results" hidden></ol>
-      <p id="error"></p>
-      <p id="link-note"></p>
-    </form>
+    </section>
+
+    <footer>
+      Territory runs peer-to-peer in your browser. Made for game night.
+    </footer>
   </div>
-  <canvas id="fx"></canvas>
-  <button type="button" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menu">&#9776;</button>
-  <div id="menu" hidden>
-    <button type="button" id="music">Music on</button>
-    <button type="button" id="full" hidden>Full screen</button>
-    <button type="button" id="mute">Sound effects on</button>
-    <label class="toggle" for="steer">
-      <input id="steer" type="checkbox">
-      Steer with cursor
-    </label>
-    <label class="toggle" for="show-fps">
-      <input id="show-fps" type="checkbox">
-      Show FPS
-    </label>
-    <label class="toggle" for="hide-mini">
-      <input id="hide-mini" type="checkbox">
-      Hide mini map
-    </label>
-    <button type="button" id="restart" hidden>Restart</button>
-  </div>
-  <!-- PeerJS and the QR generator stay classic scripts (vendored, no ESM builds); the app is one module. -->
-  <script src="peerjs.min.js"></script>
-  <script src="qrcode.min.js"></script>
-  <script src="jsqr.min.js"></script>
-  <script type="module" src="/src/client.js"></script>
+  <script>
+    // Invite links from before the /play/ move land here: forward the code.
+    try {
+      const code = new URLSearchParams(location.search).get('code')
+      if (code) location.replace('play/?code=' + encodeURIComponent(code))
+    } catch {
+      // No URL support, no forward; the Play button still works.
+    }
+  </script>
 </body>
 </html>

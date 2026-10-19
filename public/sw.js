@@ -2,21 +2,26 @@
 // or WebRTC room), but the page, art, and code load from cache after the
 // first visit, which is also what makes the app installable.
 // Bump CACHE on release so updates replace the old shell.
-const CACHE = 'territory-v4'
-// Vite build output: flat stable names (see vite.config.js). The app
-// scripts bundle into index.js (+host-session.js chunk), the styles
-// into index.css; the rest below ships verbatim from public/.
+const CACHE = 'territory-v5'
+// Vite build output: flat stable names (see vite.config.js). The landing
+// lives at /, the game bundles (play.js/play.css + host-session.js chunk)
+// serve /play/; the rest below ships verbatim from public/.
 const SHELL = [
   './',
   'index.html',
+  'play/',
+  'play/index.html',
   'manifest.webmanifest',
-  'index.js',
-  'index.css',
+  'play.js',
+  'play.css',
   'host-session.js',
   'peerjs.min.js',
   'qrcode.min.js',
   'jsqr.min.js',
   'theme.mp3',
+  'shots/picker.png',
+  'shots/waiting-room.png',
+  'shots/round.png',
   'icon-192.png',
   'icon-512.png',
   'maskable-512.png',
@@ -48,9 +53,21 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   if (new URL(request.url).origin !== self.location.origin) return
   if (request.mode === 'navigate') {
-    // Pages first so deploys show up immediately; the cached shell is the
-    // fallback when offline.
-    event.respondWith(fetch(request).catch(() => caches.match('index.html')))
+    // Pages first so deploys show up immediately; offline, fall back to
+    // the cached page itself, then the game, then the landing.
+    event.respondWith(
+      fetch(request).catch(() =>
+        caches
+          .match(request)
+          .then(
+            (hit) =>
+              hit ||
+              caches
+                .match('play/index.html')
+                .then((game) => game || caches.match('index.html')),
+          ),
+      ),
+    )
     return
   }
   // Assets: serve the cache now, refresh it in the background.

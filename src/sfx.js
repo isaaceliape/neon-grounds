@@ -346,7 +346,7 @@ globalThis.sfx = (() => {
     }
     if (!trackLoading) {
       trackLoading = globalThis
-        .fetch('theme.mp3')
+        .fetch('../theme.mp3')
         .then((response) => {
           if (!response.ok) throw new Error('theme fetch failed')
           return response.arrayBuffer()

@@ -26,19 +26,31 @@ test('the manifest describes an installable app with real icons', () => {
   assert.ok([...sizes].some((size) => size.includes('maskable')), 'a maskable icon for adaptive shapes')
 })
 
-test('the page links the manifest and registers the service worker', () => {
+test('the landing links the manifest and the game', () => {
   const html = readFileSync(atRoot('index.html'), 'utf8')
   assert.ok(html.includes('rel="manifest"'), 'manifest linked')
   assert.ok(html.includes('apple-touch-icon'), 'iOS home-screen icon linked')
   assert.ok(html.includes('theme-color'), 'theme color set')
+  assert.ok(html.includes('href="play/"'), 'Play button reaches the game')
+  assert.ok(html.includes('play/?join=1'), 'Join button skips the picker')
+  assert.ok(html.includes("play/?code="), 'old invite links forward to the game')
+  for (const shot of ['shots/picker.png', 'shots/waiting-room.png', 'shots/round.png']) {
+    assert.ok(html.includes(shot), `landing shows ${shot}`)
+    assert.ok(existsSync(new URL(`../public/${shot}`, import.meta.url)), `${shot} ships`)
+  }
+})
+
+test('the game page loads the bundle and registers the service worker', () => {
+  const html = readFileSync(new URL('../play/index.html', import.meta.url), 'utf8')
+  assert.ok(html.includes('type="module"'), 'game boots as a module')
   const client = readFileSync(inSrc('client.js'), 'utf8')
-  assert.ok(client.includes("register('sw.js')"), 'service worker registered')
+  assert.ok(client.includes("register('../sw.js')"), 'service worker registered above /play/')
 })
 
 test('the service worker parses and caches the app shell', () => {
   const source = read('sw.js')
   assert.doesNotThrow(() => new vm.Script(source), 'sw.js is valid syntax')
-  for (const file of ['index.html', 'index.js', 'index.css', 'host-session.js', 'manifest.webmanifest', 'icon-512.png']) {
+  for (const file of ['index.html', 'play/index.html', 'play.js', 'play.css', 'host-session.js', 'manifest.webmanifest', 'icon-512.png']) {
     assert.ok(source.includes(file), `shell caches ${file}`)
   }
 })
@@ -66,11 +78,25 @@ test('the shell list matches the Vite build output', () => {
   assert.ok(config.includes("chunkFileNames: '[name].js'"), 'chunks keep stable names')
   assert.ok(config.includes("assetFileNames: '[name][extname]'"), 'assets keep stable names')
   const worker = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
-  const shell = [...worker.matchAll(/'([^']+\.(?:js|css))'/g)].map((match) => match[1])
+  const shell = [...worker.matchAll(/'([^']+\.(?:js|css|png))'/g)].map((match) => match[1])
   assert.ok(shell.length > 0, 'shell lists bundles')
   for (const file of shell) {
     assert.ok(
-      ['index.js', 'index.css', 'host-session.js', 'peerjs.min.js', 'qrcode.min.js', 'jsqr.min.js'].includes(file),
+      [
+        'play.js',
+        'play.css',
+        'host-session.js',
+        'peerjs.min.js',
+        'qrcode.min.js',
+        'jsqr.min.js',
+        'shots/picker.png',
+        'shots/waiting-room.png',
+        'shots/round.png',
+        'icon-192.png',
+        'icon-512.png',
+        'maskable-512.png',
+        'apple-touch-icon.png',
+      ].includes(file),
       `${file} is a real build output or vendored file`,
     )
   }

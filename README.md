@@ -1,10 +1,10 @@
 # Territory
 
-**[▶ Play now!](https://isaaceliape.github.io/territory/) — free, no ads, no signup, nothing to install.**
+**[▶ Play now!](https://isaaceliape.github.io/territory/play/) — free, no ads, no signup, nothing to install.**
 
 Steal ground, cut lines, and snake your way to the biggest patch of neon on the map. Territory is a fast multiplayer turf war for up to 12 players that runs entirely in the browser — on your phone on the couch, or on a laptop across the internet.
 
-![The front door: host a session or join one](docs/screenshots/picker.png)
+![The front door: host a session or join one](public/shots/picker.png)
 
 ## Play with friends in 30 seconds
 
@@ -14,7 +14,7 @@ No accounts, no lobbies to grind, no server to rent. One of you taps **Host a se
 - **Tap the invite link** — it fills the code in for you.
 - **Scan the QR code** — point your phone camera at the host's screen and you join straight away, no typing at all.
 
-![A waiting room: room code, invite buttons, and a scannable QR](docs/screenshots/waiting-room.png)
+![A waiting room: room code, invite buttons, and a scannable QR](public/shots/waiting-room.png)
 
 Up to 12 seats per room. Short a few humans? Add bots (Easy, Normal, Hard) to fill the map. Rounds run 1–5 minutes, so there's always time for "just one more".
 
@@ -32,7 +32,7 @@ That one tension is the whole game, and it never gets old:
 - **Bots with personality.** Easy wobbles home early, Normal plays it straight, Hard hunts your exposed lines. Bots never die stupidly — they bounce off walls — so beating them means outplaying them.
 - **Photo finishes.** Most land when the clock stops wins. Ties break on kills. Simultaneous double knockouts both count.
 
-![A live round: trails, halo, scoreboard, mini-map](docs/screenshots/round.png)
+![A live round: trails, halo, scoreboard, mini-map](public/shots/round.png)
 
 ## Made for phones, great everywhere
 
@@ -60,6 +60,6 @@ npm run build    # minified bundle into dist/
 npm start        # serve dist/ on :4173 (+ the ?local WebSocket sim)
 ```
 
-Sources are ES modules in `src/`, the shared sim is `server/game.js`, and `public/` holds verbatim files (icons, manifest, vendored PeerJS/QR libraries, theme, service worker). Pushing to `main` tests, builds, and deploys to GitHub Pages, stamping the service-worker cache so every deploy lands fresh.
+Sources are ES modules in `src/`, the shared sim is `server/game.js`, and `public/` holds verbatim files (icons, manifest, vendored PeerJS/QR libraries, theme, service worker). The landing page is `index.html` at the root; the game lives in `play/`. Pushing to `main` tests, builds, and deploys to GitHub Pages, stamping the service-worker cache so every deploy lands fresh.
 
 Theme: "Retro Arcade Game Music" by MondaMusic ([Pixabay](https://pixabay.com/music/video-games-retro-arcade-game-music-512837/), free under the Pixabay Content License).

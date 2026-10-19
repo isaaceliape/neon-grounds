@@ -27,7 +27,7 @@ test('the invite QR encodes the room link as scalable SVG', () => {
 })
 
 test('the waiting room offers the QR next to the invite link', () => {
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
+  const html = readFileSync(new URL('../play/index.html', import.meta.url), 'utf8')
   assert.ok(html.includes('qrcode.min.js'), 'generator loads on the page')
   assert.ok(html.includes('id="show-qr"'), 'waiting room has a QR button')
   assert.ok(html.includes('id="qr"'), 'waiting room has a QR slot')
@@ -72,7 +72,7 @@ test('a generated invite QR decodes back to its URL', () => {
 })
 
 test('the join screen offers camera scanning', () => {
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
+  const html = readFileSync(new URL('../play/index.html', import.meta.url), 'utf8')
   assert.ok(html.includes('jsqr.min.js'), 'decoder loads on the page')
   assert.ok(html.includes('id="scan-qr"'), 'join screen has a scan button')
   assert.ok(html.includes('id="scanner-video"'), 'join screen has a camera preview')
