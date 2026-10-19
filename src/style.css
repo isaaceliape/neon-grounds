@@ -57,6 +57,9 @@ html, body {
   100% { transform: translate(8vw, -7vh) scale(1); border-radius: 55% 45% 52% 48% / 48% 52% 45% 55%; opacity: 0.26; }
 }
 body:has(#overlay[hidden]) #bg-blobs { opacity: 0.45; }
+/* Quality governor: tier 1 dims the in-round glow, tiers 2-3 hide it. */
+body[data-q="q1"]:has(#overlay[hidden]) #bg-blobs { opacity: 0.12; }
+body[data-q="q2"] #bg-blobs, body[data-q="q3"] #bg-blobs { display: none; }
 @media (prefers-reduced-motion: reduce) {
   #bg-blobs i { animation: none; }
 }

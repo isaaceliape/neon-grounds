@@ -5,6 +5,7 @@ import './view-helpers.js'
 import './sfx.js'
 import './p2p.js'
 import { fx } from './fx.js'
+import { createQuality, updateQuality, QUALITY_TIERS } from './quality.js'
 
 const view = document.querySelector('#view')
 const hud = document.querySelector('#hud')
@@ -215,6 +216,19 @@ if ('serviceWorker' in navigator && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(l
 const touchLeft = document.querySelector('#touch-left')
 const touchRight = document.querySelector('#touch-right')
 let lastFrameAt = performance.now()
+// Adaptive quality: EMA frame time steps the tier down on weak hardware
+// (dimming, then hiding, the background blobs; capping DPR; trimming fx)
+// and back up when headroom returns.
+let dprCap = QUALITY_TIERS[0].dpr
+const quality = createQuality()
+let qEma = 0
+let qLastCheck = 0
+function applyQuality(tier) {
+  const q = QUALITY_TIERS[tier]
+  dprCap = q.dpr
+  document.body.dataset.q = `q${tier}`
+  fx.setQuality(q.fx)
+}
 let lastStatusText = ''
 let sessionWins = {}
 let resultsKey = ''
@@ -1206,8 +1220,16 @@ function reasonText(player) {
 
 function frame() {
   const frameAt = performance.now()
-  const dt = Math.min(0.05, (frameAt - lastFrameAt) / 1000)
+  const deltaMs = frameAt - lastFrameAt
+  const dt = Math.min(0.05, deltaMs / 1000)
   lastFrameAt = frameAt
+  qEma += (Math.min(deltaMs, 100) - qEma) * 0.06
+  if (frameAt - qLastCheck >= 1000) {
+    qLastCheck = frameAt
+    const before = quality.tier
+    updateQuality(quality, qEma)
+    if (quality.tier !== before) applyQuality(quality.tier)
+  }
   if (fpsOn) {
     if (!fpsEl) {
       fpsEl = document.createElement('div')
@@ -1219,15 +1241,16 @@ function frame() {
     fpsCount += 1
     if (fpsAcc >= 500 && fpsCount > 1) {
       const avg = fpsAcc / (fpsCount - 1)
-      fpsEl.textContent = `${avg.toFixed(1)}ms ${(1000 / avg).toFixed(0)}fps`
+      fpsEl.textContent = `${avg.toFixed(1)}ms ${(1000 / avg).toFixed(0)}fps Q${quality.tier}`
       fpsAcc = 0
       fpsCount = 0
     }
   }
   fx.update(dt)
-  // Cap DPR at 2: a 3x phone pushes 9x the pixels for no visible gain on
+  // Cap DPR (2 normally, lower when the quality governor steps down): a 3x
+  // phone pushes 9x the pixels for no visible gain on
   // neon shapes, and every fullscreen pass (bg, glow, sheet, fx) pays it.
-  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const dpr = Math.min(window.devicePixelRatio || 1, dprCap)
   const cssW = window.innerWidth
   const cssH = window.innerHeight
   const pixelW = Math.round(cssW * dpr)
@@ -1910,4 +1933,5 @@ if (LOCAL_DEV) connect()
 showJoin()
 // The landing page links here with ?join=1 to skip the picker.
 if (queryParams.has('join') && !queryParams.has('code')) showSetup('join')
+applyQuality(0)
 requestAnimationFrame(frame)

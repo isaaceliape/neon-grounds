@@ -9,6 +9,11 @@ export const fx = (() => {
   const screenCtx = screen.getContext('2d')
 
   let particles = []
+  let quality = 1
+
+  function setQuality(q) {
+    quality = q
+  }
   let rings = []
   let flashes = []
   let floaters = []
@@ -33,7 +38,8 @@ export const fx = (() => {
   }
 
   function burst(x, y, color, count, minSpeed, maxSpeed, minLife, maxLife, size) {
-    for (let i = 0; i < count; i += 1) {
+    const n = Math.max(1, Math.round(count * quality))
+    for (let i = 0; i < n; i += 1) {
       const angle = rand(0, Math.PI * 2)
       const speed = rand(minSpeed, maxSpeed)
       addParticle({
@@ -116,7 +122,7 @@ export const fx = (() => {
     // Shed load when a burst just filled the pool: trail sparks are the
     // first thing to drop, so captures/deaths never hitch.
     if (particles.length > 650) return
-    const count = Math.floor(dt * 70 + Math.random())
+    const count = Math.floor(dt * 70 * quality + Math.random() * quality)
     for (let i = 0; i < count; i += 1) {
       const back = heading + Math.PI + rand(-0.55, 0.55)
       const speed = rand(1.5, 5)
@@ -435,5 +441,5 @@ export const fx = (() => {
     screenDirty = true
   }
 
-  return { capture, death, trailSparks, celebrate, update, shake, drawWorld, edgeWarning, drawScreen }
+  return { capture, death, trailSparks, celebrate, update, shake, drawWorld, edgeWarning, drawScreen, setQuality }
 })()
