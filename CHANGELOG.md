@@ -3,6 +3,12 @@
 Versions are stamped into both pages at build time (bottom-right badge)
 from `package.json`. Bump the version there and add an entry here.
 
+## 1.0.1
+
+- Drop the synthesized theme: the licensed track is the only music.
+- Fix the theme restarting on every tap and keypress.
+- Slide HUD names vertically instead of sideways.
+
 ## 1.0.0
 
 - Neon Grounds: multiplayer turf war for up to 12 players, browser-only.
