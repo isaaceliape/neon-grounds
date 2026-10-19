@@ -568,8 +568,8 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 /* hidden frame-time probe (?fps=1): diagnostics only */
 #fps {
   position: fixed;
-  left: 8px;
-  bottom: 8px;
+  left: 12px;
+  bottom: 12px;
   z-index: 60;
   padding: 4px 8px;
   font-size: 12px;
@@ -644,21 +644,21 @@ html { overscroll-behavior: none; }
 }
 
 @media (max-width: 520px) {
-  #board { top: 8px; left: 8px; min-width: 0; width: 128px; padding: 5px 7px; font-size: 12px; }
+  #board { top: 8px; left: 12px; min-width: 0; width: 128px; padding: 5px 7px; font-size: 12px; }
   #board li { gap: 6px; }
-  #mini { top: 8px; right: 8px; width: 104px; height: 78px; }
-  #menu-btn { top: 8px; right: 8px; }
-  #menu { top: 60px; right: 8px; max-height: calc(100vh - 68px); max-height: calc(100dvh - 68px); }
+  #mini { top: 8px; right: 12px; width: 104px; height: 78px; }
+  #menu-btn { top: 8px; right: 12px; }
+  #menu { top: 60px; right: 12px; max-height: calc(100vh - 68px); max-height: calc(100dvh - 68px); }
   #overlay[hidden] ~ #menu-btn { top: 94px; }
   #overlay[hidden] ~ #menu { top: 148px; max-height: calc(100vh - 156px); max-height: calc(100dvh - 156px); }
   #clock { top: 8px; font-size: 20px; padding: 4px 8px; }
   #clock.count { font-size: 56px; }
-  #feed { top: 148px; right: 8px; width: 170px; }
+  #feed { top: 148px; right: 12px; width: 170px; }
   #feed li { font-size: 12px; padding: 4px 8px; }
   #status { font-size: 13px; bottom: 16px; max-width: 70vw; text-align: center; }
   #go { top: 30%; }
   h1 { font-size: 34px; }
-  #overlay { padding: 12px; }
+  #overlay { padding: 16px; }
   #howto li { font-size: 11px; }
   #pick-row { grid-template-columns: 1fr; }
 }
@@ -667,7 +667,7 @@ html { overscroll-behavior: none; }
 @media (pointer: coarse) and (max-height: 430px) {
   #touch:not([hidden]) { bottom: 30px; }
   #touch button { height: 72px; width: min(26vw, 150px); font-size: 28px; }
-  #overlay { padding: 12px; }
+  #overlay { padding: 16px; }
   #overlay h1, #card h1 { font-size: 30px; }
   /* sideways modal: widen the card and pair fields side by side so the
      waiting room fits the short viewport without scrolling */
@@ -677,14 +677,14 @@ html { overscroll-behavior: none; }
   #room, #host-setup, #join-setup { grid-template-columns: 1fr 1fr; align-items: start; column-gap: 14px; }
   #room #roster { grid-column: 1 / -1; }
   #status { bottom: 12px; }
-  #board { top: 8px; left: 8px; min-width: 0; width: 150px; padding: 5px 8px; font-size: 13px; }
-  #mini { top: 8px; right: 8px; width: 120px; height: 90px; }
+  #board { top: 8px; left: 12px; min-width: 0; width: 150px; padding: 5px 8px; font-size: 13px; }
+  #mini { top: 8px; right: 12px; width: 120px; height: 90px; }
   #clock { top: 8px; font-size: 22px; padding: 4px 10px; }
   #clock.count { font-size: 60px; }
-  #menu-btn { top: 8px; right: 8px; }
-  #menu { top: 60px; right: 8px; max-height: calc(100vh - 68px); max-height: calc(100dvh - 68px); }
+  #menu-btn { top: 8px; right: 12px; }
+  #menu { top: 60px; right: 12px; max-height: calc(100vh - 68px); max-height: calc(100dvh - 68px); }
   #overlay[hidden] ~ #menu-btn { top: 106px; }
   #overlay[hidden] ~ #menu { top: 160px; max-height: calc(100vh - 168px); max-height: calc(100dvh - 168px); }
   #menu button, #menu .toggle { width: 140px; padding: 6px 10px; font-size: 13px; }
-  #feed { top: 186px; right: 8px; width: 190px; }
+  #feed { top: 186px; right: 12px; width: 190px; }
 }
