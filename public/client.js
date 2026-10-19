@@ -34,6 +34,13 @@ const copyCodeBtn = document.querySelector('#copy-code')
 const copyLinkBtn = document.querySelector('#copy-link')
 const queryParams = new URLSearchParams(location.search)
 const LOCAL_DEV = queryParams.has('local')
+// Hidden frame-time probe (?fps=1): a tiny overlay reporting real-device
+// numbers, so animation hitches can be diagnosed off-lab.
+const FPS_PROBE = queryParams.has('fps')
+let fpsEl = null
+let fpsAcc = 0
+let fpsCount = 0
+let fpsAt = 0
 const roomCodeEl = document.querySelector('#room-code')
 const startBtn = document.querySelector('#start')
 const addBotBtn = document.querySelector('#add-bot')
@@ -126,6 +133,7 @@ if ('serviceWorker' in navigator) {
 const touchLeft = document.querySelector('#touch-left')
 const touchRight = document.querySelector('#touch-right')
 let lastFrameAt = performance.now()
+let lastStatusText = ''
 let sessionWins = {}
 let resultsKey = ''
 // Connection mode: 'local' (Node server over WebSocket, same origin),
@@ -1119,8 +1127,26 @@ function frame() {
   const frameAt = performance.now()
   const dt = Math.min(0.05, (frameAt - lastFrameAt) / 1000)
   lastFrameAt = frameAt
+  if (FPS_PROBE) {
+    if (!fpsEl) {
+      fpsEl = document.createElement('div')
+      fpsEl.id = 'fps'
+      document.body.appendChild(fpsEl)
+    }
+    fpsAcc += frameAt - fpsAt
+    fpsAt = frameAt
+    fpsCount += 1
+    if (fpsAcc >= 500 && fpsCount > 1) {
+      const avg = fpsAcc / (fpsCount - 1)
+      fpsEl.textContent = `${avg.toFixed(1)}ms ${(1000 / avg).toFixed(0)}fps`
+      fpsAcc = 0
+      fpsCount = 0
+    }
+  }
   fx.update(dt)
-  const dpr = window.devicePixelRatio || 1
+  // Cap DPR at 2: a 3x phone pushes 9x the pixels for no visible gain on
+  // neon shapes, and every fullscreen pass (bg, glow, sheet, fx) pays it.
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
   const cssW = window.innerWidth
   const cssH = window.innerHeight
   const pixelW = Math.round(cssW * dpr)
@@ -1216,7 +1242,13 @@ function frame() {
       miniCtx.drawImage(sheet, 0, 0, mini.width, mini.height)
     }
   }
-  if (phase === 'play' || phase === 'countdown') status.textContent = statusText()
+  if (phase === 'play' || phase === 'countdown') {
+    const text = statusText()
+    if (text !== lastStatusText) {
+      lastStatusText = text
+      status.textContent = text
+    }
+  }
   fx.drawScreen(dt, cssW, cssH, dpr)
   requestAnimationFrame(frame)
 }
