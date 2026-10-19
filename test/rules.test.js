@@ -551,3 +551,91 @@ test('crossing a bot line still kills the bot', () => {
   assert.equal(bot.out.by, human.id)
   assert.equal(human.alive, true, 'the cutter survives')
 })
+
+test('parking on old enemy land does not kill you when they close elsewhere', () => {
+  const game = createGame({ w: 40, h: 30, startSize: 4, tickMs: 100, countdownMs: 0 })
+  const a = game.addPlayer('A')
+  const b = game.addPlayer('B')
+  let now = 10_000
+  assert.equal(game.start(a.id, 3, now).ok, true)
+  // A home bottom-left; B parks its head on A's old land, drawing nothing.
+  for (let y = 20; y <= 24; y++) for (let x = 5; x <= 9; x++) { game.land[y * game.w + x] = a.id; a.landCount++ }
+  b.x = 7.5
+  b.y = 22.5
+  b.heading = Math.PI
+  // A closes a big loop elsewhere that never touches B.
+  const cells = []
+  for (let y = 10; y <= 19; y++) cells.push(y * game.w + 7)
+  for (let x = 7; x <= 25; x++) cells.push(10 * game.w + x)
+  for (let y = 10; y <= 19; y++) cells.push(y * game.w + 25)
+  for (let x = 7; x <= 25; x++) cells.push(19 * game.w + x)
+  for (const cell of cells) game.trail[cell] = a.id
+  a.trailCells = cells
+  a.onOwn = false
+  a.x = 7.5
+  a.y = 19.5
+  a.heading = Math.PI / 2
+  a.turn = 0
+  a.aim = null
+  now += game.tickMs
+  game.tick(now)
+  assert.equal(a.alive, true, 'A closed its loop')
+  assert.ok(a.landCount > 25, 'A took the inside')
+  assert.equal(b.alive, true, 'a head on old land is not inside the part just taken')
+})
+
+test('two loops closed on the same tick kill each other and both count', () => {
+  const game = createGame({ w: 40, h: 30, startSize: 4, tickMs: 100, countdownMs: 0 })
+  const a = game.addPlayer('A')
+  const b = game.addPlayer('B')
+  let now = 10_000
+  assert.equal(game.start(a.id, 3, now).ok, true)
+  for (let y = 20; y <= 24; y++) for (let x = 5; x <= 9; x++) { game.land[y * game.w + x] = a.id; a.landCount++ }
+  for (let y = 20; y <= 24; y++) for (let x = 24; x <= 28; x++) { game.land[y * game.w + x] = b.id; b.landCount++ }
+  // A's loop (x5..20) with a probe north into B's half; B mirrors it.
+  // Each probe sits inside the other's about-to-close interior.
+  const acells = []
+  for (let y = 12; y <= 20; y++) acells.push(y * game.w + 5)
+  for (let x = 5; x <= 20; x++) acells.push(12 * game.w + x)
+  for (let y = 6; y <= 20; y++) acells.push(y * game.w + 20)
+  for (let x = 5; x <= 20; x++) acells.push(20 * game.w + x)
+  const bcells = []
+  for (let y = 12; y <= 20; y++) bcells.push(y * game.w + 26)
+  for (let x = 13; x <= 26; x++) bcells.push(12 * game.w + x)
+  for (let y = 6; y <= 20; y++) bcells.push(y * game.w + 13)
+  for (let x = 13; x <= 26; x++) bcells.push(20 * game.w + x)
+  const paint = (cells, id) => { for (const cell of cells) game.trail[cell] = id }
+  paint(acells, a.id)
+  paint(bcells, b.id) // B wins the two shared border cells
+  a.trailCells = acells
+  b.trailCells = bcells
+  a.onOwn = false
+  b.onOwn = false
+  // Both heads double back across their own probe tips on the same tick.
+  a.x = 20.5
+  a.y = 6.5
+  a.heading = Math.PI / 2
+  a.turn = 0
+  a.aim = null
+  b.x = 13.5
+  b.y = 6.5
+  b.heading = Math.PI / 2
+  b.turn = 0
+  b.aim = null
+  now += game.tickMs
+  game.tick(now)
+  assert.equal(a.alive, false, 'A is cut by B')
+  assert.equal(b.alive, false, 'B is cut by A')
+  assert.equal(a.out.by, b.id)
+  assert.equal(b.out.by, a.id)
+  // Both captures stand: the shared middle went to whoever closed first.
+  assert.equal(game.land[15 * game.w + 16], a.id, 'overlap keeps the first claim')
+  assert.equal(game.land[15 * game.w + 22], b.id, "B's outer ground still counts")
+  const counts = new Map()
+  for (let i = 0; i < game.land.length; i += 1) {
+    if (game.land[i]) counts.set(game.land[i], (counts.get(game.land[i]) ?? 0) + 1)
+  }
+  for (const row of game.pack().roster) {
+    assert.equal(row.land, counts.get(row.id) ?? 0, `counter matches the board for ${row.name}`)
+  }
+})

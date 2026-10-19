@@ -92,8 +92,10 @@ Your line is vulnerable only while it is outside your land. These knock you out:
 - Someone crosses that outside line. The log says cut by that player.
 - You hit the edge of the map.
 - You crash head-on into another snake.
-- Your head is inside a loop someone else just closed.
+- Your head is inside ground someone else just took. Standing on their older land is safe; only the fresh part of their loop kills you.
 - You disconnect and do not come back within 10 seconds during a round.
+
+Two loops closed on the same tick both count: if each one takes the other's head or line, both players go out.
 
 Bots never go out on their own: a bot that would hit the edge bounces back instead. Cut them, crash them, or box them in yourself, or they stay in the round.
 

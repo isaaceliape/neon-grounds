@@ -308,39 +308,85 @@ export function createGame(options = {}) {
     }
   }
 
-  function capture(player) {
+  function capture(player, closing = null, deferred = null) {
     const trailCells = player.trailCells.slice()
     const walls = new Set(trailCells)
     const withTrail = new Uint8Array(w * h)
     const beforeTrail = new Uint8Array(w * h)
     floodOutside(player.id, withTrail, walls)
     floodOutside(player.id, beforeTrail, null)
+    // Board and line as they stood when the loop closed. Claiming below
+    // clears trails and paints land, which would erase the evidence a
+    // simultaneous loop needs to prove the kill goes both ways.
+    const landBefore = Uint8Array.from(land)
+    const myTrail = new Set(trailCells)
+    // Cells this loop newly takes. Simultaneous loops close on the same
+    // board in order, so an earlier loop's fresh claims (sitting in
+    // landWrites) stay theirs: this loop skips them instead of painting
+    // over.
+    const taken = new Set()
 
     const cut = new Set()
     for (let i = 0; i < land.length; i += 1) {
       if (walls.has(i) || land[i] === player.id) continue
-      if (withTrail[i] || !beforeTrail[i]) continue
+      if (landWrites.has(i) || withTrail[i] || !beforeTrail[i]) continue
       const trailOwner = trail[i]
       if (trailOwner && trailOwner !== player.id && land[i] !== trailOwner) cut.add(trailOwner)
       if (trailOwner) setTrail(i, 0)
       setLand(i, player.id)
+      taken.add(i)
     }
 
     for (const i of trailCells) {
+      if (landWrites.has(i)) {
+        if (trail[i] === player.id) setTrail(i, 0)
+        continue
+      }
       if (trail[i] === player.id) setTrail(i, 0)
       setLand(i, player.id)
+      taken.add(i)
     }
     player.trailCells = []
 
     for (const id of cut) {
       const victim = players.get(id)
-      if (victim?.alive) kill(victim, 'cut', player)
+      if (!victim?.alive) continue
+      if (closing?.has(id) && id !== player.id && closesOn(player, myTrail, landBefore, victim)) {
+        // Both loops kill each other on the same tick: both loops count,
+        // and both go out after every loop has closed (matches the
+        // simultaneous move kills, where neither side is skipped).
+        deferred?.push({ victim, reason: 'cut', killer: player })
+        deferred?.push({ victim: player, reason: 'cut', killer: victim })
+        continue
+      }
+      kill(victim, 'cut', player)
     }
     for (const other of players.values()) {
       if (!other.alive || other.id === player.id || !other.inRound) continue
       const head = idx(Math.floor(other.x), Math.floor(other.y))
-      if (land[head] === player.id) kill(other, 'enclosed', player)
+      if (!taken.has(head)) continue
+      if (closing?.has(other.id) && closesOn(player, myTrail, landBefore, other)) {
+        deferred?.push({ victim: other, reason: 'enclosed', killer: player })
+        deferred?.push({ victim: player, reason: 'enclosed', killer: other })
+        continue
+      }
+      kill(other, 'enclosed', player)
     }
+  }
+
+  // Would victim's just-closed loop kill capturer back? Floods victim's
+  // outside against snapshots from when the loop closed: a capturer head
+  // or exposed line cell inside means mutual.
+  function closesOn(capturer, capturerTrail, capturerLand, victim) {
+    const walls = new Set(victim.trailCells)
+    const outside = new Uint8Array(w * h)
+    floodOutside(victim.id, outside, walls)
+    const head = idx(Math.floor(capturer.x), Math.floor(capturer.y))
+    if (!outside[head]) return true
+    for (const cell of capturerTrail) {
+      if (!outside[cell] && capturerTrail.has(cell) && capturerLand[cell] !== capturer.id) return true
+    }
+    return false
   }
 
   function place(player, slot) {
@@ -839,10 +885,15 @@ export function createGame(options = {}) {
         returning.push(player)
       }
     }
+    const deferred = []
+    const closing = new Set(returning.map((player) => player.id))
     for (const player of returning) {
       if (!player.alive) continue
-      capture(player)
+      capture(player, closing, deferred)
       player.onOwn = true
+    }
+    for (const { victim, reason, killer } of deferred) {
+      if (victim.alive) kill(victim, reason, killer)
     }
   }
 
