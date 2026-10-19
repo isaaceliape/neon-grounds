@@ -1540,7 +1540,7 @@ restartBtn.addEventListener('click', () => {
 
 function paintMute() {
   const off = sfx.isMuted()
-  muteBtn.textContent = off ? 'Sound off' : 'Sound on'
+  muteBtn.textContent = off ? 'Sound effects off' : 'Sound effects on'
   muteBtn.setAttribute('aria-pressed', String(!off))
 }
 
