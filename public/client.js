@@ -1408,6 +1408,16 @@ codeInput.addEventListener('keydown', (event) => {
   joinOnlineRoom()
 })
 
+// Room codes are uppercase: morph typing and pastes as they happen (caret
+// kept where it was) so the field never shows lowercase.
+codeInput.addEventListener('input', () => {
+  const upper = codeInput.value.toUpperCase()
+  if (upper === codeInput.value) return
+  const caret = codeInput.selectionStart ?? upper.length
+  codeInput.value = upper
+  codeInput.setSelectionRange(caret, caret)
+})
+
 function showSetup(which) {
   error.textContent = ''
   picker.hidden = which !== 'picker'
