@@ -317,39 +317,73 @@ globalThis.sfx = (() => {
 
   // Licensed theme track (see README credits), looped through the music
   // bus so the music mute, ducking, and limiter treat it like the synth.
-  // Anything missing or failing falls back to the synthesized loop.
-  let trackEl = null
+  // A decoded buffer loop is sample-accurate: unlike an <audio> element,
+  // it cannot click or gap at the loop point. The synth plays immediately
+  // and hands over the moment the track is decoded; anything missing or
+  // failing keeps the synth.
+  let trackBuffer = null
+  let trackLoading = null
+  let trackSource = null
+  let trackGain = null
   let trackFailed = false
   function startTrack() {
-    if (!trackFailed && trackEl) {
-      const play = trackEl.play()
-      if (play && typeof play.catch === 'function') play.catch(() => useSynthInstead())
+    if (trackFailed || !ctx) {
+      kickScheduler()
       return
     }
     if (
-      trackFailed ||
-      !ctx ||
-      typeof globalThis.Audio !== 'function' ||
-      typeof ctx.createMediaElementSource !== 'function'
+      typeof globalThis.fetch !== 'function' ||
+      typeof ctx.decodeAudioData !== 'function' ||
+      typeof ctx.createBufferSource !== 'function'
     ) {
       kickScheduler()
       return
     }
-    trackEl = new globalThis.Audio()
-    trackEl.src = 'theme.mp3'
-    trackEl.loop = true
-    trackEl.preload = 'auto'
-    trackEl.volume = 0.8
-    ctx.createMediaElementSource(trackEl).connect(music)
-    trackEl.addEventListener('error', () => useSynthInstead())
-    const play = trackEl.play()
-    if (play && typeof play.catch === 'function') play.catch(() => useSynthInstead())
+    kickScheduler()
+    if (trackBuffer) {
+      playTrackBuffer()
+      return
+    }
+    if (!trackLoading) {
+      trackLoading = globalThis
+        .fetch('theme.mp3')
+        .then((response) => {
+          if (!response.ok) throw new Error('theme fetch failed')
+          return response.arrayBuffer()
+        })
+        .then((bytes) => ctx.decodeAudioData(bytes))
+        .then((buffer) => {
+          trackBuffer = buffer
+          trackLoading = null
+          if (playing) playTrackBuffer()
+        })
+        .catch(() => {
+          trackLoading = null
+          trackFailed = true
+        })
+    }
   }
 
-  function useSynthInstead() {
-    trackFailed = true
-    trackEl = null
-    if (playing) kickScheduler()
+  function playTrackBuffer() {
+    if (!trackBuffer || !ctx || !playing || trackFailed) return
+    stopSynth()
+    if (!trackGain) {
+      trackGain = ctx.createGain()
+      trackGain.gain.value = 0.8
+      trackGain.connect(music)
+    }
+    if (trackSource) {
+      try {
+        trackSource.stop()
+      } catch {
+        // already stopped
+      }
+    }
+    trackSource = ctx.createBufferSource()
+    trackSource.buffer = trackBuffer
+    trackSource.loop = true
+    trackSource.connect(trackGain)
+    trackSource.start()
   }
 
   // Starts the loop. Safe to call before the first gesture: it waits for
@@ -365,7 +399,18 @@ globalThis.sfx = (() => {
 
   function stopMusic() {
     playing = false
-    if (trackEl) trackEl.pause()
+    stopSynth()
+    if (trackSource) {
+      try {
+        trackSource.stop()
+      } catch {
+        // already stopped
+      }
+      trackSource = null
+    }
+  }
+
+  function stopSynth() {
     if (musicTimer && typeof globalThis.clearInterval === 'function') {
       globalThis.clearInterval(musicTimer)
     }

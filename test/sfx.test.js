@@ -7,7 +7,7 @@ const source = readFileSync(new URL('../public/sfx.js', import.meta.url), 'utf8'
 
 // Minimal stand-ins for the Web Audio API that count what the code does.
 function makeEnv({ stored = null, musicStored = null, withAudio = true, trackAudio = false } = {}) {
-  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [], gains: [], tracks: [] }
+  const stats = { contexts: 0, oscillators: 0, noiseSources: 0, resumes: 0, masterGain: null, created: [], gains: [], trackSources: 0 }
   const timers = []
   const cleared = []
   const entries = []
@@ -76,6 +76,23 @@ function makeEnv({ stored = null, musicStored = null, withAudio = true, trackAud
     createMediaElementSource() {
       return node()
     }
+
+    createBufferSource() {
+      // Shared mock: effect noise, the snare, and the track loop all start
+      // buffer sources, so count both uses here.
+      return {
+        ...node(),
+        start() {
+          stats.noiseSources += 1
+          stats.trackSources += 1
+        },
+        stop() {},
+      }
+    }
+
+    decodeAudioData() {
+      return Promise.resolve({ duration: 78 })
+    }
   }
 
   const listeners = {}
@@ -87,24 +104,10 @@ function makeEnv({ stored = null, musicStored = null, withAudio = true, trackAud
     addEventListener: (type, fn) => { listeners[type] = fn },
   }
   if (withAudio) sandbox.AudioContext = FakeAudioContext
-  if (trackAudio) {
-    sandbox.Audio = class {
-      constructor() {
-        stats.tracks.push(this)
-        this.listeners = {}
-        this.played = 0
-      }
-
-      play() {
-        this.played += 1
-      }
-
-      pause() {}
-
-      addEventListener(type, fn) {
-        this.listeners[type] = fn
-      }
-    }
+  if (trackAudio === 'error') {
+    sandbox.fetch = () => Promise.reject(new Error('offline'))
+  } else if (trackAudio) {
+    sandbox.fetch = () => Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) })
   }
   sandbox.globalThis = sandbox
   sandbox.setInterval = (fn) => { timers.push(fn); return timers.length }
@@ -216,21 +219,26 @@ test('the theme plays drums, pad, and arp alongside lead and bass', () => {
   assert.ok(stats.noiseSources >= 1, 'the snare fires a noise hit')
 })
 
-test('the licensed track plays through the music bus when available', () => {
-  const { sfx, stats, listeners, timers } = makeEnv({ trackAudio: true })
+test('the licensed track loops from a decoded buffer once ready', async () => {
+  const { sfx, stats, listeners, timers, cleared } = makeEnv({ trackAudio: true })
   listeners.pointerdown()
   sfx.startMusic()
-  assert.equal(stats.tracks.length, 1, 'track element created')
-  assert.equal(stats.tracks[0].played, 1, 'track plays')
-  assert.equal(timers.length, 0, 'synth loop stays off while the track plays')
+  assert.equal(timers.length, 1, 'synth covers the download')
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.ok(stats.trackSources >= 1, 'buffer loop starts after decode')
+  assert.deepEqual(cleared, [1], 'synth hands over')
 })
 
-test('a broken track falls back to the synth loop', () => {
-  const { sfx, stats, listeners, timers } = makeEnv({ trackAudio: true })
+test('a broken track keeps the synth loop', async () => {
+  const { sfx, stats, listeners, timers, cleared } = makeEnv({ trackAudio: 'error' })
   listeners.pointerdown()
   sfx.startMusic()
-  stats.tracks[0].listeners.error()
-  assert.equal(timers.length, 1, 'synth scheduler starts')
+  assert.equal(timers.length, 1)
+  await new Promise((resolve) => setImmediate(resolve))
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(stats.trackSources, 0, 'no buffer loop')
+  assert.deepEqual(cleared, [], 'synth keeps playing')
   const before = stats.oscillators
   timers[0]()
   assert.ok(stats.oscillators > before, 'synth notes scheduled')
