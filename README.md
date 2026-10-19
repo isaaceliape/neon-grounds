@@ -95,6 +95,8 @@ Your line is vulnerable only while it is outside your land. These knock you out:
 - Your head is inside a loop someone else just closed.
 - You disconnect and do not come back within 10 seconds during a round.
 
+Bots never go out on their own: a bot that would hit the edge bounces back instead. Cut them, crash them, or box them in yourself, or they stay in the round.
+
 Driving across filled land is not a cut. A line painted on top of your land does not kill you.
 
 When you die, the unfinished line disappears. Land you already took stays your color. Other players can still take it by closing a loop around it.

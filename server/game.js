@@ -257,6 +257,29 @@ export function createGame(options = {}) {
     setLand(i, id)
   }
 
+  // Bots never die on their own: a bot that would hit the wall bounces
+  // back instead. Cuts, crashes, and boxes still kill bots, whoever
+  // drives them.
+  function bounce(move) {
+    const player = move.player
+    let { nx, ny } = move
+    let heading = player.heading
+    if (nx < 0 || nx >= w) {
+      heading = Math.PI - heading
+      nx = Math.min(w - 0.001, Math.max(0.001, nx))
+    }
+    if (ny < 0 || ny >= h) {
+      heading = -heading
+      ny = Math.min(h - 0.001, Math.max(0.001, ny))
+    }
+    player.heading = heading
+    const crossed = cellsCrossed(player.x, player.y, nx, ny)
+    move.nx = nx
+    move.ny = ny
+    move.out = false
+    move.cells = crossed.cells.filter((cell) => cell >= 0 && cell < w * h)
+  }
+
   function floodOutside(ownerId, seen, walls) {
     const queue = []
     let head = 0
@@ -756,7 +779,9 @@ export function createGame(options = {}) {
     }
 
     for (const move of moves) {
-      if (move.out) doom(move.player, 'wall', null)
+      if (!move.out) continue
+      if (move.player.bot) bounce(move)
+      else doom(move.player, 'wall', null)
     }
 
     const groups = new Map()

@@ -503,3 +503,51 @@ test('the normal bot plays the same as before levels existed', () => {
   assert.deepEqual(BOT_LEVELS.normal, { homeAt: 16, noise: 0, hunt: false, rest: 0 })
   assert.equal(botGrowth('normal', 1, 300), botGrowth('normal', 99, 300), 'normal does not use randomness')
 })
+
+test('a bot bounces off the wall instead of dying', () => {
+  const game = createGame({ w: 40, h: 30, startSize: 4, tickMs: 100, countdownMs: 0 })
+  const human = game.addPlayer('Human')
+  const bot = game.player(game.addBot('normal').id)
+  let now = 10_000
+  assert.equal(game.start(human.id, 3, now).ok, true)
+  // Park the bot half a cell from the right wall, aimed straight out.
+  // Its steering can only turn it a fraction before the step leaves the map.
+  bot.x = 39.4
+  bot.y = 15.5
+  bot.heading = 0
+  bot.turn = 0
+  bot.aim = null
+  now += game.tickMs
+  game.tick(now)
+  assert.equal(bot.alive, true, 'bots never die on their own')
+  assert.ok(bot.x < game.w && bot.x > 0, 'the bounce keeps the bot on the map')
+  assert.ok(Math.cos(bot.heading) < 0, 'the bounce mirrors the heading off the wall')
+})
+
+test('crossing a bot line still kills the bot', () => {
+  const game = createGame({ w: 40, h: 30, startSize: 4, tickMs: 100, countdownMs: 0 })
+  const human = game.addPlayer('Human')
+  const bot = game.player(game.addBot('normal').id)
+  let now = 10_000
+  assert.equal(game.start(human.id, 3, now).ok, true)
+  // A bot line stretched across the human's path.
+  const cells = []
+  for (let x = 10; x <= 30; x += 1) {
+    const cell = 15 * game.w + x
+    cells.push(cell)
+    game.trail[cell] = bot.id
+  }
+  bot.trailCells = cells
+  bot.onOwn = false
+  bot.x = 20.5
+  bot.y = 16.5
+  human.x = 20.5
+  human.y = 14.4
+  game.setDirection(human.id, 'down')
+  now += game.tickMs
+  game.tick(now)
+  assert.equal(bot.alive, false)
+  assert.equal(bot.out.reason, 'cut')
+  assert.equal(bot.out.by, human.id)
+  assert.equal(human.alive, true, 'the cutter survives')
+})
