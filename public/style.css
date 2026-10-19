@@ -501,7 +501,8 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 
 /* sound toggle */
 #music,
-#mute {
+#mute,
+#full {
   position: fixed;
   right: 16px;
   bottom: 16px;
@@ -514,8 +515,13 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   bottom: 56px;
 }
 
+#full {
+  bottom: 96px;
+}
+
 #music[aria-pressed="false"],
-#mute[aria-pressed="false"] {
+#mute[aria-pressed="false"],
+#full[aria-pressed="false"] {
   color: var(--muted);
   border-color: rgba(142, 160, 184, 0.5);
   box-shadow: none;
@@ -613,5 +619,6 @@ html { overscroll-behavior: none; }
   #clock.count { font-size: 60px; }
   #mute { bottom: auto; top: 106px; right: 8px; }
   #music { bottom: auto; top: 146px; right: 8px; }
+  #full { bottom: auto; top: 186px; right: 8px; }
   #feed { top: 186px; right: 8px; width: 190px; }
 }

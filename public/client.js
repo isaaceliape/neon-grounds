@@ -111,6 +111,7 @@ const feed = document.querySelector('#feed')
 const howto = document.querySelector('#howto')
 const muteBtn = document.querySelector('#mute')
 const musicBtn = document.querySelector('#music')
+const fullBtn = document.querySelector('#full')
 const touchPad = document.querySelector('#touch')
 const touchLeft = document.querySelector('#touch-left')
 const touchRight = document.querySelector('#touch-right')
@@ -1507,6 +1508,43 @@ musicBtn.addEventListener('click', () => {
   paintMusic()
 })
 paintMusic()
+
+// Full screen toggle for phones and tablets. Stays hidden on desktops and
+// on browsers with no fullscreen support (older iPhone Safari): entering
+// needs a tap, so the button only appears where it can work.
+function paintFull() {
+  const on = Boolean(document.fullscreenElement)
+  fullBtn.textContent = on ? 'Exit full' : 'Full screen'
+  fullBtn.setAttribute('aria-pressed', String(on))
+}
+
+fullBtn.addEventListener('click', () => {
+  if (document.fullscreenElement) {
+    if (typeof document.exitFullscreen === 'function') document.exitFullscreen()
+    return
+  }
+  const root = document.documentElement
+  const ask =
+    typeof root.requestFullscreen === 'function'
+      ? root.requestFullscreen()
+      : typeof root.webkitRequestFullscreen === 'function'
+        ? root.webkitRequestFullscreen()
+        : null
+  // A denied request (kiosk profiles, iframes without permission) rejects:
+  // swallow it so the tap never surfaces as an error.
+  if (ask && typeof ask.catch === 'function') ask.catch(() => {})
+})
+document.addEventListener('fullscreenchange', paintFull)
+
+if (
+  typeof globalThis.matchMedia === 'function' &&
+  globalThis.matchMedia('(pointer: coarse)').matches &&
+  (typeof document.documentElement.requestFullscreen === 'function' ||
+    typeof document.documentElement.webkitRequestFullscreen === 'function')
+) {
+  fullBtn.hidden = false
+  paintFull()
+}
 
 const heldTurn = { left: false, right: false }
 

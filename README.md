@@ -65,7 +65,7 @@ Hold the key to keep turning. If you never turn, you drive straight.
 
 Steer with the cursor: the snake curves toward the pointer. If the pointer is directly behind you, it turns sideways first.
 
-Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices.
+Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A Full screen button sits above the music toggle on phones and tablets that support it.
 
 You start in the middle of a small square of your own color, aimed toward the middle of the map.
 
