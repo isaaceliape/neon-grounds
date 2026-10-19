@@ -16,8 +16,12 @@
     :root {
       --bg: #070910;
       --card: #0c121c;
+      --n1: #ff4fd8;
+      --n2: #39ffd2;
+      --n3: #c8ff3e;
+      --n4: #a06bff;
+      --neon: var(--n1);
       --line: rgba(255, 79, 216, 0.4);
-      --neon: #ff4fd8;
       --pink: #ff2d78;
       --muted: #8ea0b8;
       --radius: 14px;
@@ -36,8 +40,12 @@
       margin: 0;
       font-size: clamp(52px, 10vw, 96px);
       letter-spacing: 0.02em;
-      color: var(--neon);
-      text-shadow: 0 0 18px rgba(255, 79, 216, 0.65), 0 0 60px rgba(255, 79, 216, 0.3);
+      background: linear-gradient(100deg, var(--n1), var(--n4) 45%, var(--n2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      filter: drop-shadow(0 0 18px rgba(255, 79, 216, 0.45));
     }
     header.hero p.tag {
       margin: 12px 0 0;
@@ -46,13 +54,16 @@
     }
     .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 20px 0 0; padding: 0; list-style: none; }
     .badges li {
-      border: 1px solid var(--line);
+      border: 1px solid;
       border-radius: 999px;
       padding: 4px 14px;
       font-size: 14px;
-      color: var(--neon);
-      background: rgba(255, 79, 216, 0.07);
+      background: rgba(255, 255, 255, 0.03);
     }
+    .badges li:nth-child(4n+1) { color: var(--n1); border-color: var(--n1); }
+    .badges li:nth-child(4n+2) { color: var(--n2); border-color: var(--n2); }
+    .badges li:nth-child(4n+3) { color: var(--n3); border-color: var(--n3); }
+    .badges li:nth-child(4n) { color: var(--n4); border-color: var(--n4); }
     .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 32px 0 0; }
     .cta a {
       display: inline-block;
@@ -61,17 +72,23 @@
       font-weight: 700;
       text-decoration: none;
       border-radius: var(--radius);
-      border: 1px solid var(--neon);
+      border: 1px solid transparent;
       color: #2b0620;
-      background: var(--neon);
+      background: linear-gradient(100deg, var(--n1), var(--n4));
       box-shadow: 0 0 24px rgba(255, 79, 216, 0.45);
     }
-    .cta a.ghost { background: transparent; color: var(--neon); box-shadow: none; }
+    .cta a.ghost { background: transparent; border-color: var(--n2); color: var(--n2); box-shadow: none; }
     section { padding: 36px 0; }
-    section h2 { color: var(--neon); font-size: 28px; margin: 0 0 12px; }
+    section h2 { font-size: 28px; margin: 0 0 12px; }
+    section:nth-of-type(1) h2 { color: var(--n2); }
+    section:nth-of-type(2) h2 { color: var(--n3); }
+    section:nth-of-type(3) h2 { color: var(--n4); }
     .steps { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 16px 0 0; padding: 0; list-style: none; }
     .steps li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
-    .steps li strong { display: block; color: var(--neon); margin-bottom: 4px; }
+    .steps li strong { display: block; margin-bottom: 4px; }
+    .steps li:nth-child(1) strong { color: var(--n1); }
+    .steps li:nth-child(2) strong { color: var(--n2); }
+    .steps li:nth-child(3) strong { color: var(--n3); }
     .shots { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
     .shots figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
     .shots img { display: block; width: 100%; height: auto; }
