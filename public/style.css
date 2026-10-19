@@ -100,12 +100,7 @@ html, body {
   image-rendering: pixelated;
 }
 
-#restart {
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
-  pointer-events: auto;
-}
+/* the Restart row lives in the hamburger menu (see #menu below) */
 
 #status:empty { display: none; }
 
@@ -522,6 +517,9 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   padding: 8px;
   display: grid;
   gap: 8px;
+  max-height: calc(100vh - 78px);
+  max-height: calc(100dvh - 78px);
+  overflow-y: auto;
   background: rgba(8, 12, 22, 0.95);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -537,6 +535,19 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   padding: 8px 12px;
   font-size: 14px;
   text-align: left;
+  white-space: nowrap;
+}
+
+#menu .toggle {
+  width: 150px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #0c121c;
+  cursor: pointer;
 }
 
 #menu button[aria-pressed="false"] {
@@ -548,7 +559,7 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 /* In a round the overlay hides and the mini-map shows: the menu drops
    below the mini-map instead of floating in the corner. */
 #overlay[hidden] ~ #menu-btn { top: 171px; }
-#overlay[hidden] ~ #menu { top: 225px; }
+#overlay[hidden] ~ #menu { top: 225px; max-height: calc(100vh - 233px); max-height: calc(100dvh - 233px); }
 
 /* hidden frame-time probe (?fps=1): diagnostics only */
 #fps {
@@ -626,8 +637,6 @@ html { overscroll-behavior: none; }
     transform: scale(0.95);
     box-shadow: 0 0 30px rgba(57, 255, 210, 0.8);
   }
-
-  #restart { bottom: 176px; }
 }
 
 @media (max-width: 520px) {
@@ -635,9 +644,9 @@ html { overscroll-behavior: none; }
   #board li { gap: 6px; }
   #mini { top: 8px; right: 8px; width: 104px; height: 78px; }
   #menu-btn { top: 8px; right: 8px; }
-  #menu { top: 60px; right: 8px; }
+  #menu { top: 60px; right: 8px; max-height: calc(100vh - 68px); max-height: calc(100dvh - 68px); }
   #overlay[hidden] ~ #menu-btn { top: 94px; }
-  #overlay[hidden] ~ #menu { top: 148px; }
+  #overlay[hidden] ~ #menu { top: 148px; max-height: calc(100vh - 156px); max-height: calc(100dvh - 156px); }
   #clock { top: 8px; font-size: 20px; padding: 4px 8px; }
   #clock.count { font-size: 56px; }
   #feed { top: 148px; right: 8px; width: 170px; }
@@ -654,15 +663,17 @@ html { overscroll-behavior: none; }
 @media (pointer: coarse) and (max-height: 430px) {
   #touch:not([hidden]) { bottom: 30px; }
   #touch button { height: 72px; width: min(26vw, 150px); font-size: 28px; }
-  #restart { bottom: 112px; }
+  #overlay { padding: 12px; }
+  #overlay h1, #card h1 { font-size: 30px; }
   #status { bottom: 12px; }
   #board { top: 8px; left: 8px; min-width: 0; width: 150px; padding: 5px 8px; font-size: 13px; }
   #mini { top: 8px; right: 8px; width: 120px; height: 90px; }
   #clock { top: 8px; font-size: 22px; padding: 4px 10px; }
   #clock.count { font-size: 60px; }
   #menu-btn { top: 8px; right: 8px; }
-  #menu { top: 60px; right: 8px; }
+  #menu { top: 60px; right: 8px; max-height: calc(100vh - 68px); max-height: calc(100dvh - 68px); }
   #overlay[hidden] ~ #menu-btn { top: 106px; }
-  #overlay[hidden] ~ #menu { top: 160px; }
+  #overlay[hidden] ~ #menu { top: 160px; max-height: calc(100vh - 168px); max-height: calc(100dvh - 168px); }
+  #menu button, #menu .toggle { width: 140px; padding: 6px 10px; font-size: 13px; }
   #feed { top: 186px; right: 8px; width: 190px; }
 }

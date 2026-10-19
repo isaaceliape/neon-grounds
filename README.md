@@ -44,7 +44,6 @@ A new visitor sees the name field until they join. The live round is not pushed 
 Everyone who has joined sees the same room: the player list, their color, and who the host is.
 
 - Your name. Edit it and press Enter, or click away. The list updates for everyone. Names lock when the round starts. You can edit again after the round, before the next one.
-- Steer with the cursor. Off by default. The choice is saved in this browser.
 - Round length. The host picks 1, 2, 3, or 5 minutes. The default is 3.
 - Add bot. Host only. Pick Easy, Normal, or Hard, then click Add bot. A room holds up to 3 bots. The host removes one with the x next to its name.
 - Start. Host only. Other players see a disabled "Waiting for the host" button.
@@ -65,9 +64,9 @@ Keyboard, when Steer with the cursor is off:
 
 Hold the key to keep turning. If you never turn, you drive straight.
 
-Steer with the cursor: the snake curves toward the pointer. If the pointer is directly behind you, it turns sideways first.
+Steer with the cursor: the snake curves toward the pointer. If the pointer is directly behind you, it turns sideways first. Toggle it anytime from the hamburger menu; off by default, and the choice is saved in this browser.
 
-Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A hamburger menu beside the mini-map holds Music, Sound, and (on phones and tablets that support it) Full screen.
+Touch screens: two large buttons, left and right, appear at the bottom while you are alive in a round. Hold one to keep turning. Sliding your finger off a button, or a cancelled touch, lets go of it. The buttons only show on touch devices. A hamburger menu beside the mini-map holds Music, Sound, Steer with cursor, Restart (host only, during a round), and (on phones and tablets that support it) Full screen.
 
 You start in the middle of a small square of your own color, aimed toward the middle of the map.
 
@@ -145,7 +144,7 @@ During a round:
 - Timer, top center. It counts down. The last three seconds before movement are shown large.
 - Mini-map, top right. The whole board. It clears when a new round starts, so the previous round does not stay on it.
 - Kill feed, under the mini-map. Who was cut, boxed in, crashed, hit the wall, or left, and who took 1% or more of the map. It keeps four lines and each fades after 5 seconds.
-- Restart, bottom left, host only.
+- Restart, in the hamburger menu, host only, during a round.
 - A bright head with a nose showing the direction you are heading, and a pulsing halo around your own.
 - A line is drawn with a shimmer. Another player's exposed line within 10 cells of your head pulses red, so you can see what you could cut or what could cut you.
 - A red glow along a wall when you are driving toward it within 8 cells. It gets stronger as you close in.

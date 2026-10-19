@@ -23,7 +23,6 @@
     <canvas id="mini" width="168" height="126"></canvas>
     <ol id="feed"></ol>
     <p id="status"></p>
-    <button type="button" id="restart" hidden>Restart</button>
     <div id="touch" hidden>
       <button type="button" id="touch-left" aria-label="Turn left">&#9664;</button>
       <button type="button" id="touch-right" aria-label="Turn right">&#9654;</button>
@@ -93,10 +92,6 @@
         </div>
         <label id="nick-label" for="nick">Your name</label>
         <input id="nick" maxlength="16" autocomplete="off">
-        <label class="toggle" for="steer">
-          <input id="steer" type="checkbox">
-          Steer with the cursor
-        </label>
         <ol id="roster"></ol>
         <div id="share"></div>
         <label id="length-label" for="minutes">Round length</label>
@@ -128,6 +123,11 @@
     <button type="button" id="music">Music on</button>
     <button type="button" id="full" hidden>Full screen</button>
     <button type="button" id="mute">Sound on</button>
+    <label class="toggle" for="steer">
+      <input id="steer" type="checkbox">
+      Steer with cursor
+    </label>
+    <button type="button" id="restart" hidden>Restart</button>
   </div>
   <script src="view-helpers.js"></script>
   <script src="peerjs.min.js"></script>

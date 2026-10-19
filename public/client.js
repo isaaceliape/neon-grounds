@@ -1535,6 +1535,7 @@ startBtn.addEventListener('click', () => {
 
 restartBtn.addEventListener('click', () => {
   send({ type: 'restart' })
+  setMenu(false)
 })
 
 function paintMute() {
