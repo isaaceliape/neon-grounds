@@ -189,9 +189,9 @@ h1 {
 }
 h1 .l1, h1 .l2, h1 .l3, h1 .l4 {
   text-shadow:
-    0 0 7px #fff,
-    0 0 10px #fff,
-    0 0 21px #fff,
+    0 0 7px var(--glow),
+    0 0 10px var(--glow),
+    0 0 21px var(--glow),
     0 0 42px var(--glow),
     0 0 82px var(--glow),
     0 0 92px var(--glow),
@@ -208,14 +208,14 @@ h1 .grad {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.65)) drop-shadow(0 0 34px rgba(255, 79, 216, 0.75)) drop-shadow(0 0 80px rgba(160, 107, 255, 0.55));
+  filter: drop-shadow(0 0 10px rgba(255, 79, 216, 0.9)) drop-shadow(0 0 34px rgba(255, 79, 216, 0.75)) drop-shadow(0 0 80px rgba(160, 107, 255, 0.55));
 }
 @keyframes neon-flicker {
   0%, 18%, 22%, 25%, 53%, 57%, 100% {
     text-shadow:
-      0 0 4px #fff,
-      0 0 11px #fff,
-      0 0 19px #fff,
+      0 0 4px var(--glow),
+      0 0 11px var(--glow),
+      0 0 19px var(--glow),
       0 0 40px var(--glow),
       0 0 80px var(--glow),
       0 0 90px var(--glow),
