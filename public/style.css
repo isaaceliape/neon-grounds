@@ -503,7 +503,7 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
    beside the mini-map */
 #menu-btn {
   position: fixed;
-  top: 171px;
+  top: 16px;
   right: 16px;
   z-index: 32;
   width: 46px;
@@ -515,7 +515,7 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
 
 #menu {
   position: fixed;
-  top: 225px;
+  top: 70px;
   right: 16px;
   z-index: 32;
   margin: 0;
@@ -544,6 +544,11 @@ input, select { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
   border-color: rgba(142, 160, 184, 0.5);
   box-shadow: none;
 }
+
+/* In a round the overlay hides and the mini-map shows: the menu drops
+   below the mini-map instead of floating in the corner. */
+#overlay[hidden] ~ #menu-btn { top: 171px; }
+#overlay[hidden] ~ #menu { top: 225px; }
 
 /* hidden frame-time probe (?fps=1): diagnostics only */
 #fps {
@@ -629,8 +634,10 @@ html { overscroll-behavior: none; }
   #board { top: 8px; left: 8px; min-width: 0; width: 128px; padding: 5px 7px; font-size: 12px; }
   #board li { gap: 6px; }
   #mini { top: 8px; right: 8px; width: 104px; height: 78px; }
-  #menu-btn { top: 94px; right: 8px; }
-  #menu { top: 148px; right: 8px; }
+  #menu-btn { top: 8px; right: 8px; }
+  #menu { top: 60px; right: 8px; }
+  #overlay[hidden] ~ #menu-btn { top: 94px; }
+  #overlay[hidden] ~ #menu { top: 148px; }
   #clock { top: 8px; font-size: 20px; padding: 4px 8px; }
   #clock.count { font-size: 56px; }
   #feed { top: 148px; right: 8px; width: 170px; }
@@ -653,7 +660,9 @@ html { overscroll-behavior: none; }
   #mini { top: 8px; right: 8px; width: 120px; height: 90px; }
   #clock { top: 8px; font-size: 22px; padding: 4px 10px; }
   #clock.count { font-size: 60px; }
-  #menu-btn { top: 106px; right: 8px; }
-  #menu { top: 160px; right: 8px; }
+  #menu-btn { top: 8px; right: 8px; }
+  #menu { top: 60px; right: 8px; }
+  #overlay[hidden] ~ #menu-btn { top: 106px; }
+  #overlay[hidden] ~ #menu { top: 160px; }
   #feed { top: 186px; right: 8px; width: 190px; }
 }
