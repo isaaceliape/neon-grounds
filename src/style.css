@@ -38,23 +38,23 @@ html, body {
    for less motion. */
 #bg-blobs { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
 #bg-blobs i { position: absolute; width: 62vmax; height: 62vmax; filter: blur(60px); opacity: 0.42; }
-#bg-blobs .b1 { background: radial-gradient(circle, var(--n1), transparent 55%); top: -18%; left: -14%; animation: morph1 16s ease-in-out infinite alternate; }
-#bg-blobs .b2 { background: radial-gradient(circle, var(--n4), transparent 55%); bottom: -20%; right: -12%; animation: morph2 19s ease-in-out infinite alternate; }
-#bg-blobs .b3 { background: radial-gradient(circle, var(--glow), transparent 55%); top: 30%; left: 55%; width: 46vmax; height: 46vmax; opacity: 0.32; animation: morph3 13s ease-in-out infinite alternate; }
+#bg-blobs .b1 { background: radial-gradient(circle, var(--n1), transparent 55%); top: -18%; left: -14%; animation: morph1 8s ease-in-out infinite; }
+#bg-blobs .b2 { background: radial-gradient(circle, var(--n4), transparent 55%); bottom: -20%; right: -12%; animation: morph2 10s ease-in-out infinite; }
+#bg-blobs .b3 { background: radial-gradient(circle, var(--glow), transparent 55%); top: 30%; left: 55%; width: 46vmax; height: 46vmax; opacity: 0.32; animation: morph3 7s ease-in-out infinite; }
 @keyframes morph1 {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 42% 58% 63% 37% / 45% 42% 58% 55%; }
-  50% { transform: translate(11vw, 8vh) scale(1.28) rotate(40deg); border-radius: 63% 37% 41% 59% / 55% 63% 37% 45%; }
-  100% { transform: translate(-5vw, 13vh) scale(0.92) rotate(90deg); border-radius: 37% 63% 55% 45% / 63% 37% 63% 37%; }
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 42% 58% 63% 37% / 45% 42% 58% 55%; opacity: 0.34; }
+  50% { transform: translate(14vw, 10vh) scale(1.32) rotate(55deg); border-radius: 63% 37% 41% 59% / 55% 63% 37% 45%; opacity: 0.5; }
+  100% { transform: translate(-6vw, 15vh) scale(0.9) rotate(110deg); border-radius: 37% 63% 55% 45% / 63% 37% 63% 37%; opacity: 0.34; }
 }
 @keyframes morph2 {
-  0% { transform: translate(0, 0) scale(1.1) rotate(0deg); border-radius: 58% 42% 37% 63% / 42% 58% 42% 58%; }
-  50% { transform: translate(-10vw, -7vh) scale(0.85) rotate(-35deg); border-radius: 41% 59% 63% 37% / 63% 41% 59% 41%; }
-  100% { transform: translate(7vw, -12vh) scale(1.22) rotate(-80deg); border-radius: 59% 41% 42% 58% / 41% 59% 41% 59%; }
+  0% { transform: translate(0, 0) scale(1.1) rotate(0deg); border-radius: 58% 42% 37% 63% / 42% 58% 42% 58%; opacity: 0.34; }
+  50% { transform: translate(-13vw, -9vh) scale(0.82) rotate(-50deg); border-radius: 41% 59% 63% 37% / 63% 41% 59% 41%; opacity: 0.5; }
+  100% { transform: translate(9vw, -14vh) scale(1.25) rotate(-100deg); border-radius: 59% 41% 42% 58% / 41% 59% 41% 59%; opacity: 0.34; }
 }
 @keyframes morph3 {
-  0% { transform: translate(0, 0) scale(0.9); border-radius: 50% 50% 55% 45% / 55% 45% 55% 45%; }
-  50% { transform: translate(-8vw, 6vh) scale(1.2); border-radius: 45% 55% 48% 52% / 52% 48% 55% 45%; }
-  100% { transform: translate(6vw, -5vh) scale(1); border-radius: 55% 45% 52% 48% / 48% 52% 45% 55%; }
+  0% { transform: translate(0, 0) scale(0.9); border-radius: 50% 50% 55% 45% / 55% 45% 55% 45%; opacity: 0.26; }
+  50% { transform: translate(-10vw, 8vh) scale(1.25); border-radius: 45% 55% 48% 52% / 52% 48% 55% 45%; opacity: 0.4; }
+  100% { transform: translate(8vw, -7vh) scale(1); border-radius: 55% 45% 52% 48% / 48% 52% 45% 55%; opacity: 0.26; }
 }
 body:has(#overlay[hidden]) #bg-blobs { display: none; }
 @media (prefers-reduced-motion: reduce) {

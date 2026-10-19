@@ -206,7 +206,8 @@ const touchPad = document.querySelector('#touch')
 
 // Installable web app: the service worker caches the shell after the first
 // visit, so the page loads offline and browsers offer installation.
-if ('serviceWorker' in navigator) {
+// Skipped on localhost so dev iterations are never served stale.
+if ('serviceWorker' in navigator && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
   globalThis.addEventListener('load', () => {
     navigator.serviceWorker.register('../sw.js').catch(() => {})
   })
